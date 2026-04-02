@@ -8,6 +8,7 @@ const restaurantRoutes  = require('./routes/restaurants');
 const recommendRoutes   = require('./routes/recommend');
 const feedbackRoutes    = require('./routes/feedback');
 const groupRoutes       = require('./routes/group');
+const locationRoutes    = require('./routes/location');
 
 const app = express();
 
@@ -21,25 +22,34 @@ app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/recommend',   recommendRoutes);
 app.use('/api/feedback',    feedbackRoutes);
 app.use('/api/group',       groupRoutes);
+app.use('/api/location',    locationRoutes);
 
 // ── Health check ──────────────────────────────────────────
-app.get('/api/health', (req, res) => res.json({ status: 'ok', message: 'Rasa API running' }));
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Rasa API running' });
+});
 
 // ── Global error handler ──────────────────────────────────
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(err.status || 500).json({ success: false, message: err.message || 'Internal server error' });
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Internal server error',
+  });
 });
 
 // ── DB + Start ────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
+
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
-    console.log('✅ MongoDB connected');
-    app.listen(PORT, () => console.log(`🚀 Rasa API running on port ${PORT}`));
+    console.log('MongoDB connected');
+    app.listen(PORT, () => {
+      console.log(`Rasa API running on port ${PORT}`);
+    });
   })
   .catch(err => {
-    console.error('❌ MongoDB connection error:', err.message);
+    console.error('MongoDB connection error:', err.message);
     process.exit(1);
   });
