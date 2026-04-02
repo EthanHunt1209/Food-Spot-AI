@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rasa — Nearby Restaurants</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<!-- Leaflet JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<style>
+:root{
+  --bg:#0d0d0d;--bg2:#131313;--bg3:#191919;--bg4:#212121;--bg5:#2a2a2a;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);
+  --text:#f0ede8;--text2:#a09a94;--text3:#5e5a56;
+  --accent:#e8c17a;--accent2:#d4956a;--accent3:#7ec8a4;--red:#e07070;
+  --font-h:'Syne',sans-serif;--font-b:'DM Sans',sans-serif;
+  --r:10px;--rl:16px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font-b);background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* NAV */
+nav{height:56px;background:rgba(13,13,13,.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;flex-shrink:0;z-index:1000}
+.logo{font-family:var(--font-h);font-size:20px;font-weight:800;color:var(--accent);cursor:pointer;letter-spacing:-.5px;text-decoration:none}
+.logo em{color:var(--text);font-style:normal}
+.nav-r{display:flex;align-items:center;gap:8px}
+.nb{padding:6px 13px;border-radius:var(--r);font-size:12px;cursor:pointer;border:1px solid var(--border2);font-family:var(--font-b);transition:all .18s;background:none;color:var(--text2);text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.nb:hover{color:var(--text);background:var(--bg3)}
+.nb.hi{background:var(--accent);color:#0d0d0d;font-weight:600;border-color:transparent}
+.nb.hi:hover{background:#f0cc88}
+
+/* LAYOUT — sidebar + map */
+.app{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:380px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-top{padding:1.1rem;border-bottom:1px solid var(--border);flex-shrink:0}
+.sidebar-title{font-family:var(--font-h);font-size:17px;font-weight:700;letter-spacing:-.3px;margin-bottom:.65rem}
+.search-wrap{position:relative;margin-bottom:.75rem}
+.search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke:var(--text3);fill:none;stroke-width:2;stroke-linecap:round;pointer-events:none}
+.search-inp{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:9px 36px 9px 34px;font-size:13px;font-family:var(--font-b);color:var(--text);outline:none;transition:border-color .18s}
+.search-inp:focus{border-color:rgba(232,193,122,.35)}
+.search-inp::placeholder{color:var(--text3)}
+.sc{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;line-height:1;display:none;padding:0}
+.sc:hover{color:var(--text2)}
+
+/* Sort + radius controls */
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sort-group{display:flex;gap:4px;background:var(--bg4);border-radius:var(--r);padding:3px}
+.sort-btn{padding:5px 11px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;border:none;font-family:var(--font-b);color:var(--text3);background:transparent;transition:all .15s}
+.sort-btn.on{background:var(--bg2);color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.radius-wrap{display:flex;align-items:center;gap:6px;margin-left:auto}
+.radius-wrap label{font-size:11px;color:var(--text3)}
+.radius-wrap input[type=range]{width:80px;-webkit-appearance:none;height:3px;background:var(--bg5);border-radius:2px;outline:none}
+.radius-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--accent);border-radius:50%;cursor:pointer}
+.radius-val{font-size:11px;color:var(--accent);font-weight:600;min-width:28px}
+
+/* Location banner */
+.loc-banner{display:flex;align-items:center;gap:8px;padding:.65rem 1.1rem;background:rgba(126,200,164,.06);border-bottom:1px solid rgba(126,200,164,.12);font-size:12px;color:var(--accent3);flex-shrink:0}
+.loc-banner.err{background:rgba(224,112,112,.06);border-color:rgba(224,112,112,.12);color:var(--red)}
+.loc-banner.loading{background:rgba(232,193,122,.06);border-color:rgba(232,193,122,.12);color:var(--accent)}
+.loc-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Restaurant list */
+.rest-list{flex:1;overflow-y:auto;padding:.75rem}
+.rest-list::-webkit-scrollbar{width:3px}
+.rest-list::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:2px}
+
+.rcard{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rl);padding:1rem;margin-bottom:8px;cursor:pointer;transition:all .2s}
+.rcard:hover{border-color:var(--border2);background:var(--bg4)}
+.rcard.active{border-color:rgba(232,193,122,.4);background:rgba(232,193,122,.05)}
+.rcard-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.rcard-name{font-family:var(--font-h);font-size:14px;font-weight:700;letter-spacing:-.2px}
+.dist-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:rgba(126,200,164,.12);color:var(--accent3);border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.dist-badge svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2}
+.rcard-addr{font-size:11px;color:var(--text3);margin-bottom:7px}
+.rcard-tags{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:7px}
+.tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:500}
+.tv{background:rgba(126,200,164,.1);color:var(--accent3)}
+.tnv{background:rgba(212,149,106,.13);color:var(--accent2)}
+.tb{background:rgba(232,193,122,.09);color:var(--accent)}
+.tc{background:var(--bg5);color:var(--text2)}
+.rcard-foot{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text3)}
+.star{color:#EF9F27}
+.match-bar{height:2px;background:var(--bg5);border-radius:1px;overflow:hidden;margin-top:7px}
+.match-fill{height:100%;border-radius:1px;background:linear-gradient(90deg,var(--accent2),var(--accent))}
+.empty-state{text-align:center;padding:2rem;color:var(--text3);font-size:13px}
+.empty-icon{font-size:32px;margin-bottom:.6rem;display:block;opacity:.5}
+
+/* MAP */
+#map{flex:1;z-index:0}
+
+/* Leaflet dark overrides */
+.leaflet-tile-pane{filter:brightness(.75) saturate(.6) hue-rotate(180deg) invert(1)}
+.leaflet-container{background:#0d0d0d}
+
+/* Custom marker popup */
+.leaflet-popup-content-wrapper{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);box-shadow:0 8px 32px rgba(0,0,0,.6);color:var(--text);font-family:var(--font-b)}
+.leaflet-popup-tip{background:var(--bg2)}
+.leaflet-popup-content{margin:12px 16px;min-width:200px}
+.popup-name{font-family:var(--font-h);font-size:15px;font-weight:700;margin-bottom:4px}
+.popup-addr{font-size:12px;color:var(--text3);margin-bottom:8px}
+.popup-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.popup-dist{font-size:13px;font-weight:600;color:var(--accent3);margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.popup-btn{display:block;width:100%;padding:7px;background:var(--accent);color:#0d0d0d;border:none;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-b);margin-top:8px;text-align:center;text-decoration:none;transition:background .15s}
+.popup-btn:hover{background:#f0cc88}
+
+/* User location pulse */
+.user-marker{width:18px;height:18px;border-radius:50%;background:rgba(106,176,232,.9);border:3px solid #fff;box-shadow:0 0 0 6px rgba(106,176,232,.25),0 2px 8px rgba(0,0,0,.4);animation:ripple 2s ease-in-out infinite}
+@keyframes ripple{0%,100%{box-shadow:0 0 0 6px rgba(106,176,232,.25),0 2px 8px rgba(0,0,0,.4)}50%{box-shadow:0 0 0 12px rgba(106,176,232,.08),0 2px 8px rgba(0,0,0,.4)}}
+
+/* Spinner */
+.spin{display:inline-block;width:12px;height:12px;border:2px solid rgba(232,193,122,.3);border-top-color:var(--accent);border-radius:50%;animation:rot .7s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* Radius circle on map */
+.radius-circle{stroke:rgba(232,193,122,.4);stroke-width:1.5;stroke-dasharray:6 4;fill:rgba(232,193,122,.04)}
+
+/* Toast */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:10px 16px;font-size:12px;z-index:9999;transform:translateY(60px);opacity:0;transition:all .28s}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-color:rgba(126,200,164,.3);color:var(--accent3)}
+.toast.err{border-color:rgba(224,112,112,.3);color:var(--red)}
+
+@media(max-width:768px){
+  .app{flex-direction:column}
+  .sidebar{width:100%;height:45vh;border-right:none;border-bottom:1px solid var(--border)}
+  #map{height:55vh;flex:none}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="/">Rasa<em>.</em></a>
+  <div class="nav-r">
+    <a class="nb" href="/">← Back to home</a>
+    <button class="nb hi" id="locate-btn" onclick="getUserLocation()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+      Locate Me
+    </button>
+  </div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-top">
+      <div class="sidebar-title">Nearby Restaurants</div>
+
+      <!-- Search -->
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input class="search-inp" id="search-inp" placeholder="Search by name, cuisine, dish…" oninput="filterList()">
+        <button class="sc" id="sc" onclick="clearSearch()">×</button>
+      </div>
+
+      <!-- Sort + Radius -->
+      <div class="controls">
+        <div class="sort-group">
+          <button class="sort-btn on" id="sort-dist" onclick="setSort('distance')">Nearest</button>
+          <button class="sort-btn"    id="sort-rating" onclick="setSort('rating')">Rating</button>
+          <button class="sort-btn"    id="sort-match"  onclick="setSort('match')">Match</button>
+        </div>
+        <div class="radius-wrap">
+          <label>Radius</label>
+          <input type="range" min="1" max="20" step="1" value="10" id="radius-sl" oninput="onRadiusChange(this.value)">
+          <span class="radius-val" id="radius-val">10 km</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Location banner -->
+    <div class="loc-banner loading" id="loc-banner">
+      <span class="loc-dot"></span>
+      <span id="loc-text">Waiting for your location…</span>
+    </div>
+
+    <!-- List -->
+    <div class="rest-list" id="rest-list">
+      <div class="empty-state">
+        <span class="empty-icon">📍</span>
+        Click <strong>Locate Me</strong> to find nearby restaurants
+      </div>
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div id="map"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// CONFIG — change if your backend URL differs
+// ═══════════════════════════════════════════
+const API = window.location.port === '5000'
+  ? '/api'
+  : 'http://localhost:5000/api';
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let map, userMarker, radiusCircle;
+let allRestaurants = [];   // all fetched (with distanceKm)
+let displayed      = [];   // after filter + sort
+let markers        = {};   // { restaurantId: leafletMarker }
+let activeId       = null;
+let userLatLng     = null;
+let currentSort    = 'distance';
+let currentRadius  = 10;
+let userPref       = null;  // from localStorage (for match score)
+
+// Colour ramp for distance (green → amber → red)
+const COLORS = ['#7ec8a4','#9fd4a0','#c2c980','#e8c17a','#d4956a','#e07070'];
+
+// ═══════════════════════════════════════════
+// MAP INIT
+// ═══════════════════════════════════════════
+function initMap(lat, lng) {
+  if (map) { map.remove(); map = null; }
+  map = L.map('map', {
+    center: [lat, lng],
+    zoom: 14,
+    zoomControl: true,
+    attributionControl: true,
+  });
+
+  // OpenStreetMap tiles (free, no API key)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 19,
+  }).addTo(map);
+
+  // User location marker (custom pulsing div icon)
+  const userIcon = L.divIcon({
+    className: '',
+    html: '<div class="user-marker"></div>',
+    iconSize:   [18, 18],
+    iconAnchor: [9, 9],
+  });
+  userMarker = L.marker([lat, lng], { icon: userIcon, zIndexOffset: 1000 }).addTo(map);
+  userMarker.bindTooltip('You are here', { permanent: false, direction: 'top' });
+
+  // Radius circle
+  drawRadiusCircle(lat, lng, currentRadius);
+}
+
+function drawRadiusCircle(lat, lng, km) {
+  if (radiusCircle) radiusCircle.remove();
+  radiusCircle = L.circle([lat, lng], {
+    radius:      km * 1000,
+    className:   'radius-circle',
+    interactive: false,
+  }).addTo(map);
+}
+
+// ═══════════════════════════════════════════
+// CUSTOM RESTAURANT MARKER
+// ═══════════════════════════════════════════
+function makeMarkerIcon(emoji, color, active) {
+  const size   = active ? 44 : 36;
+  const border = active ? `3px solid ${color}` : `2px solid ${color}`;
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      width:${size}px;height:${size}px;border-radius:50%;
+      background:var(--bg2,#131313);
+      border:${border};
+      display:flex;align-items:center;justify-content:center;
+      font-size:${active ? 20 : 16}px;
+      box-shadow:0 2px 12px rgba(0,0,0,.5);
+      transition:all .2s;
+      cursor:pointer;
+    ">${emoji}</div>`,
+    iconSize:   [size, size],
+    iconAnchor: [size/2, size/2],
+    popupAnchor:[0, -(size/2 + 6)],
+  });
+}
+
+function distColor(km) {
+  if (km < 1)  return COLORS[0];
+  if (km < 2)  return COLORS[1];
+  if (km < 3)  return COLORS[2];
+  if (km < 5)  return COLORS[3];
+  if (km < 8)  return COLORS[4];
+  return COLORS[5];
+}
+
+// ═══════════════════════════════════════════
+// PLACE MARKERS
+// ═══════════════════════════════════════════
+function placeMarkers(restaurants) {
+  // Clear old
+  Object.values(markers).forEach(m => m.remove());
+  markers = {};
+
+  restaurants.forEach(r => {
+    if (!r.lat || !r.lng) return;
+    const id     = r._id;
+    const color  = distColor(r.distanceKm ?? 999);
+    const icon   = makeMarkerIcon(r.emoji || '🍽️', color, false);
+    const marker = L.marker([r.lat, r.lng], { icon }).addTo(map);
+
+    // Popup HTML
+    const pct = r.matchScore ?? Math.round(r.rating * 20);
+    marker.bindPopup(`
+      <div class="popup-name">${r.emoji || '🍽️'} ${r.name}</div>
+      <div class="popup-addr">${r.address || ''}</div>
+      ${r.distanceLabel ? `<div class="popup-dist">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        ${r.distanceLabel} away
+      </div>` : ''}
+      <div class="popup-row"><span>★ ${r.rating}</span><span>${'₹'.repeat(r.priceLevel)}</span><span>${r.cuisines.join(', ')}</span></div>
+      <div class="popup-row"><span>Match</span><span style="color:var(--accent,#e8c17a);font-weight:600">${pct}%</span></div>
+      <button class="popup-btn" onclick="window.location.href='/?restaurant=${id}'">View Restaurant →</button>
+    `, { maxWidth: 240 });
+
+    marker.on('click', () => setActiveCard(id));
+    marker.on('popupopen', () => setActiveCard(id));
+    markers[id] = marker;
+  });
+}
+
+function setActiveCard(id) {
+  // Update sidebar highlight
+  document.querySelectorAll('.rcard').forEach(c => c.classList.remove('active'));
+  const card = document.getElementById('card-' + id);
+  if (card) { card.classList.add('active'); card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+  activeId = id;
+
+  // Resize markers
+  const r = allRestaurants.find(x => x._id === id);
+  Object.entries(markers).forEach(([mid, m]) => {
+    const rest = allRestaurants.find(x => x._id === mid);
+    if (!rest) return;
+    const color = distColor(rest.distanceKm ?? 999);
+    m.setIcon(makeMarkerIcon(rest.emoji || '🍽️', color, mid === id));
+  });
+}
+
+// ═══════════════════════════════════════════
+// FETCH RESTAURANTS FROM BACKEND
+// ═══════════════════════════════════════════
+async function fetchNearby(lat, lng, radius) {
+  setBanner('loading', 'Fetching nearby restaurants…');
+  try {
+    const res  = await fetch(`${API}/location/nearby?lat=${lat}&lng=${lng}&radius=${radius}`);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message);
+    allRestaurants = data.restaurants;
+    setBanner('ok', `Found ${allRestaurants.length} restaurant${allRestaurants.length !== 1 ? 's' : ''} within ${radius} km`);
+    renderList();
+    placeMarkers(displayed);
+    return data.restaurants;
+  } catch (e) {
+    // Fallback: fetch all restaurants and compute distance in JS
+    try {
+      const res  = await fetch(`${API}/restaurants/all`);
+      const data = await res.json();
+      allRestaurants = data.restaurants.map(r => {
+        const dist = r.lat && r.lng ? haversine(lat, lng, r.lat, r.lng) : null;
+        return {
+          ...r,
+          distanceKm:   dist != null ? +dist.toFixed(2) : null,
+          distanceLabel: dist != null
+            ? dist < 1 ? Math.round(dist * 1000) + ' m' : dist.toFixed(1) + ' km'
+            : null,
+        };
+      }).filter(r => r.distanceKm == null || r.distanceKm <= radius)
+        .sort((a, b) => (a.distanceKm ?? 999) - (b.distanceKm ?? 999));
+      setBanner('ok', `${allRestaurants.length} restaurants found`);
+      renderList();
+      placeMarkers(displayed);
+    } catch (e2) {
+      setBanner('err', 'Could not load restaurants. Is the backend running?');
+    }
+  }
+}
+
+// Haversine (JS fallback)
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371, dLat = (lat2 - lat1) * Math.PI / 180, dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// ═══════════════════════════════════════════
+// LIST RENDER
+// ═══════════════════════════════════════════
+function renderList() {
+  const q = document.getElementById('search-inp').value.trim().toLowerCase();
+
+  // Filter
+  let list = allRestaurants.filter(r => {
+    if (!q) return true;
+    return [r.name, r.address, ...(r.cuisines||[]), ...(r.tags||[]),
+      ...(r.menu||[]).flatMap(s => s.items.map(i => i.name + ' ' + i.description))
+    ].join(' ').toLowerCase().includes(q);
+  });
+
+  // Sort
+  if (currentSort === 'distance') list.sort((a, b) => (a.distanceKm??999) - (b.distanceKm??999));
+  if (currentSort === 'rating')   list.sort((a, b) => b.rating - a.rating);
+  if (currentSort === 'match')    list.sort((a, b) => (b.matchScore??0) - (a.matchScore??0));
+
+  displayed = list;
+
+  const el = document.getElementById('rest-list');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty-state"><span class="empty-icon">🍽️</span>${q ? 'No results for "'+q+'"' : 'No restaurants in this radius'}</div>`;
+    return;
+  }
+
+  el.innerHTML = list.map(r => {
+    const id   = r._id;
+    const pct  = r.matchScore ?? Math.round(r.rating * 20);
+    const tags = (r.tags||[]).map(t => `<span class="tag ${t==='veg'?'tv':t==='nonveg'?'tnv':'tb'}">${t}</span>`).join('')
+               + (r.cuisines||[]).map(c => `<span class="tag tc">${c}</span>`).join('');
+    return `
+    <div class="rcard ${activeId===id?'active':''}" id="card-${id}" onclick="onCardClick('${id}',${r.lat},${r.lng})">
+      <div class="rcard-top">
+        <div class="rcard-name">${r.emoji||'🍽️'} ${r.name}</div>
+        ${r.distanceLabel ? `<div class="dist-badge">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          ${r.distanceLabel}
+        </div>` : ''}
+      </div>
+      <div class="rcard-addr">${r.address||''}</div>
+      <div class="rcard-tags">${tags}</div>
+      <div class="rcard-foot">
+        <span><span class="star">★</span> ${r.rating}</span>
+        <span>${'₹'.repeat(r.priceLevel)}</span>
+        <span>Match: <strong style="color:var(--accent)">${pct}%</strong></span>
+      </div>
+      <div class="match-bar"><div class="match-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+
+  // Re-place markers with filtered set
+  placeMarkers(displayed);
+}
+
+function onCardClick(id, lat, lng) {
+  setActiveCard(id);
+  if (map && lat && lng) {
+    map.setView([lat, lng], 16, { animate: true });
+    const m = markers[id];
+    if (m) setTimeout(() => m.openPopup(), 400);
+  }
+}
+
+// ═══════════════════════════════════════════
+// GEOLOCATION
+// ═══════════════════════════════════════════
+function getUserLocation() {
+  const btn = document.getElementById('locate-btn');
+  btn.innerHTML = '<span class="spin"></span> Locating…';
+  btn.disabled  = true;
+  setBanner('loading', 'Getting your location…');
+
+  if (!navigator.geolocation) {
+    useFallbackLocation();
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      userLatLng = { lat, lng };
+      onLocationFound(lat, lng);
+      btn.innerHTML = '📍 Located';
+      btn.disabled  = false;
+    },
+    err => {
+      console.warn('Geolocation error:', err.message);
+      useFallbackLocation();
+      btn.innerHTML = '📍 Locate Me';
+      btn.disabled  = false;
+    },
+    { timeout: 8000, enableHighAccuracy: true }
+  );
+}
+
+// Fallback: centre of Vijayawada
+function useFallbackLocation() {
+  const lat = 16.5062, lng = 80.6480;
+  userLatLng = { lat, lng };
+  onLocationFound(lat, lng);
+  setBanner('ok', 'Using Vijayawada city centre (location permission denied)');
+  toast('Using Vijayawada centre as fallback', '');
+  const btn = document.getElementById('locate-btn');
+  btn.innerHTML = '📍 Locate Me';
+  btn.disabled  = false;
+}
+
+function onLocationFound(lat, lng) {
+  initMap(lat, lng);
+  fetchNearby(lat, lng, currentRadius);
+}
+
+// ═══════════════════════════════════════════
+// CONTROLS
+// ═══════════════════════════════════════════
+function setSort(mode) {
+  currentSort = mode;
+  ['dist','rating','match'].forEach(id => {
+    document.getElementById('sort-' + id)?.classList.remove('on');
+  });
+  document.getElementById('sort-' + mode)?.classList.add('on');
+  renderList();
+}
+
+function onRadiusChange(val) {
+  currentRadius = +val;
+  document.getElementById('radius-val').textContent = val + ' km';
+  if (userLatLng) {
+    drawRadiusCircle(userLatLng.lat, userLatLng.lng, currentRadius);
+    fetchNearby(userLatLng.lat, userLatLng.lng, currentRadius);
+  }
+}
+
+function filterList() {
+  const v = document.getElementById('search-inp').value;
+  document.getElementById('sc').style.display = v ? 'block' : 'none';
+  renderList();
+}
+function clearSearch() {
+  document.getElementById('search-inp').value = '';
+  document.getElementById('sc').style.display = 'none';
+  renderList();
+}
+
+// ═══════════════════════════════════════════
+// BANNER + TOAST
+// ═══════════════════════════════════════════
+function setBanner(type, text) {
+  const el = document.getElementById('loc-banner');
+  const tx = document.getElementById('loc-text');
+  el.className = 'loc-banner ' + type;
+  tx.textContent = text;
+}
+function toast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = 'toast show' + (type === 'ok' ? ' ok' : type === 'err' ? ' err' : '');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.className = 'toast', 3000);
+}
+
+// ═══════════════════════════════════════════
+// AUTO-START: init map at Vijayawada, then
+// prompt for location automatically
+// ═══════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  // Show a base map while waiting
+  initMap(16.5062, 80.6480);
+  // Try to auto-locate
+  getUserLocation();
+});
+</script>
+</body>
+</html>
