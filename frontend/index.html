@@ -46,6 +46,39 @@ nav{position:sticky;top:0;z-index:200;background:rgba(13,13,13,.93);backdrop-fil
 .search-clear{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;line-height:1;display:none;padding:0}
 .search-clear:hover{color:var(--text2)}
 
+/* RESULTS HEAD + MAP BUTTON */
+.results-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:1rem;
+  flex-wrap:wrap;
+}
+.results-head .left{
+  flex:1;
+  min-width:220px;
+}
+.map-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:10px 16px;
+  border-radius:var(--r);
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  border:1px solid var(--border2);
+  font-family:var(--font-b);
+  transition:all .18s;
+  background:var(--bg2);
+  color:var(--text);
+}
+.map-btn:hover{
+  background:var(--bg3);
+  border-color:var(--border3);
+}
+
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:var(--r);font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:var(--font-b);transition:all .18s}
 .btn-p{background:var(--accent);color:#0d0d0d;font-weight:700}
@@ -327,7 +360,6 @@ textarea:focus{border-color:rgba(232,193,122,.3)}
 <div class="page" id="page-auth">
   <div class="auth-wrap">
     <div class="auth-card">
-      <!-- LOGIN -->
       <div id="auth-login">
         <div class="auth-title">Welcome back</div>
         <div class="auth-sub">Sign in to get personalized recommendations</div>
@@ -336,7 +368,6 @@ textarea:focus{border-color:rgba(232,193,122,.3)}
         <button class="btn btn-p btn-w" id="login-btn" onclick="doLogin()">Sign in</button>
         <div class="auth-switch">Don't have an account? <a onclick="showRegister()">Create one</a></div>
       </div>
-      <!-- REGISTER -->
       <div id="auth-register" style="display:none">
         <div class="auth-title">Create account</div>
         <div class="auth-sub">Set your food preferences to get started</div>
@@ -364,10 +395,15 @@ textarea:focus{border-color:rgba(232,193,122,.3)}
     <div class="pg-sub">Highest-rated restaurants right now</div>
   </div></div>
   <div class="pc">
-    <div class="search-wrap">
-      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input class="search-input" id="search-first" placeholder="Search restaurants, cuisines, dishes…" oninput="filterFirst()">
-      <button class="search-clear" id="sc-first" onclick="clearSearch('first')">×</button>
+    <div class="results-head">
+      <div class="left">
+        <div class="search-wrap" style="margin-bottom:0">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input class="search-input" id="search-first" placeholder="Search restaurants, cuisines, dishes…" oninput="filterFirst()">
+          <button class="search-clear" id="sc-first" onclick="clearSearch('first')">×</button>
+        </div>
+      </div>
+      <button class="map-btn" onclick="openMapView('first')">📍 View Map</button>
     </div>
     <div id="first-grid"></div>
   </div>
@@ -381,11 +417,17 @@ textarea:focus{border-color:rgba(232,193,122,.3)}
     <div class="pg-sub" id="personal-sub">Tuned to your taste</div>
   </div></div>
   <div class="pc">
-    <div class="search-wrap">
-      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input class="search-input" id="search-personal" placeholder="Search restaurants, cuisines, dishes…" oninput="filterPersonal()">
-      <button class="search-clear" id="sc-personal" onclick="clearSearch('personal')">×</button>
+    <div class="results-head">
+      <div class="left">
+        <div class="search-wrap" style="margin-bottom:0">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input class="search-input" id="search-personal" placeholder="Search restaurants, cuisines, dishes…" oninput="filterPersonal()">
+          <button class="search-clear" id="sc-personal" onclick="clearSearch('personal')">×</button>
+        </div>
+      </div>
+      <button class="map-btn" onclick="openMapView('personal')">📍 View Map</button>
     </div>
+
     <div class="filter-bar">
       <div class="fg"><div class="fg-label">Cuisine</div><div class="chips" id="cuisine-chips"></div></div>
       <div class="fg" style="min-width:148px;max-width:185px"><div class="fg-label">Budget</div><div class="sl-row" style="margin:0"><input type="range" min="1" max="3" step="1" value="2" id="budget-sl" oninput="S.budget=+this.value;document.getElementById('bv').textContent=['₹','₹₹','₹₹₹'][this.value-1]"><span class="sl-val" id="bv">₹₹</span></div></div>
@@ -519,9 +561,10 @@ const ALL_CUISINES = ['Indian','Chinese','Thai','South Indian','Andhra','Italian
 // ═══════════════════════════════════════════
 const S = {
   user: null, token: null,
-  restaurants: [],     // all restaurants cached
-  firstRests: [],      // top-rated
-  personalRests: [],   // scored for user
+  restaurants: [],
+  firstRests: [],
+  personalRests: [],
+  groupRests: [],
   currentSession: null,
   currentRestId: null,
   restFrom: 'personal',
@@ -529,10 +572,13 @@ const S = {
   room: null,
   pendingFeedback: [],
   afterAuthPage: null,
+  firstFiltered: [],
+  personalFiltered: [],
+  groupFiltered: [],
 };
 
 // ═══════════════════════════════════════════
-// INIT — restore session from localStorage
+// INIT
 // ═══════════════════════════════════════════
 (function init() {
   const saved = localStorage.getItem('rasa_token');
@@ -543,7 +589,6 @@ const S = {
     updateNav();
     checkPending();
   }
-  // Seed cuisine chips for register
   document.getElementById('reg-cuisines').innerHTML = ALL_CUISINES.map(c =>
     `<button class="chip" onclick="this.classList.toggle('on')">${c}</button>`).join('');
   loadAllRestaurants();
@@ -570,16 +615,21 @@ async function api(method, path, body) {
 function goPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
-  S.page = id; window.scrollTo(0, 0);
-  if (id === 'first')    renderFirstPage();
+  S.page = id;
+  window.scrollTo(0, 0);
+  if (id === 'first') renderFirstPage();
   if (id === 'personal') initPersonalPage();
-  if (id === 'group')    renderGroupLobby();
-  if (id === 'history')  fetchHistory();
+  if (id === 'group') renderGroupLobby();
+  if (id === 'history') fetchHistory();
   if (id === 'feedback') fetchPendingFeedback();
-  if (id === 'profile')  renderProfile();
+  if (id === 'profile') renderProfile();
 }
 function requireAuth(dest) {
-  if (!S.user) { S.afterAuthPage = dest; goPage('auth'); return; }
+  if (!S.user) {
+    S.afterAuthPage = dest;
+    goPage('auth');
+    return;
+  }
   goPage(dest);
 }
 function updateNav() {
@@ -604,50 +654,82 @@ function updateNav() {
 // ═══════════════════════════════════════════
 // AUTH
 // ═══════════════════════════════════════════
-function showLogin()    { document.getElementById('auth-login').style.display=''; document.getElementById('auth-register').style.display='none'; }
-function showRegister() { document.getElementById('auth-login').style.display='none'; document.getElementById('auth-register').style.display=''; }
+function showLogin() {
+  document.getElementById('auth-login').style.display = '';
+  document.getElementById('auth-register').style.display = 'none';
+}
+function showRegister() {
+  document.getElementById('auth-login').style.display = 'none';
+  document.getElementById('auth-register').style.display = '';
+}
 
 async function doLogin() {
   const btn = document.getElementById('login-btn');
   const err = document.getElementById('login-err');
   const email = document.getElementById('login-email').value.trim();
-  const pw    = document.getElementById('login-pw').value;
+  const pw = document.getElementById('login-pw').value;
   err.style.display = 'none';
-  if (!email || !pw) { err.textContent = 'Please fill all fields'; err.style.display = 'block'; return; }
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  if (!email || !pw) {
+    err.textContent = 'Please fill all fields';
+    err.style.display = 'block';
+    return;
+  }
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
   try {
     const data = await api('POST', '/auth/login', { email, password: pw });
     onAuth(data);
   } catch (e) {
-    err.textContent = e.message; err.style.display = 'block';
+    err.textContent = e.message;
+    err.style.display = 'block';
   }
-  btn.disabled = false; btn.textContent = 'Sign in';
+  btn.disabled = false;
+  btn.textContent = 'Sign in';
 }
 
 async function doRegister() {
   const btn = document.getElementById('reg-btn');
   const err = document.getElementById('reg-err');
-  const name  = document.getElementById('reg-name').value.trim();
+  const name = document.getElementById('reg-name').value.trim();
   const email = document.getElementById('reg-email').value.trim();
-  const pw    = document.getElementById('reg-pw').value;
+  const pw = document.getElementById('reg-pw').value;
   const cuisines = Array.from(document.querySelectorAll('#reg-cuisines .chip.on')).map(c => c.textContent);
-  const budget   = +document.getElementById('reg-budget').value;
-  const spice    = +document.getElementById('reg-spice').value;
+  const budget = +document.getElementById('reg-budget').value;
+  const spice = +document.getElementById('reg-spice').value;
   err.style.display = 'none';
-  if (!name || !email || !pw) { err.textContent = 'Please fill all fields'; err.style.display = 'block'; return; }
-  if (pw.length < 6) { err.textContent = 'Password must be at least 6 characters'; err.style.display = 'block'; return; }
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  if (!name || !email || !pw) {
+    err.textContent = 'Please fill all fields';
+    err.style.display = 'block';
+    return;
+  }
+  if (pw.length < 6) {
+    err.textContent = 'Password must be at least 6 characters';
+    err.style.display = 'block';
+    return;
+  }
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
   try {
-    const data = await api('POST', '/auth/register', { name, email, password: pw, preferredCuisines: cuisines, budgetPreference: budget, spicePreference: spice });
+    const data = await api('POST', '/auth/register', {
+      name,
+      email,
+      password: pw,
+      preferredCuisines: cuisines,
+      budgetPreference: budget,
+      spicePreference: spice
+    });
     onAuth(data);
   } catch (e) {
-    err.textContent = e.message; err.style.display = 'block';
+    err.textContent = e.message;
+    err.style.display = 'block';
   }
-  btn.disabled = false; btn.textContent = 'Create account';
+  btn.disabled = false;
+  btn.textContent = 'Create account';
 }
 
 function onAuth(data) {
-  S.token = data.token; S.user = data.user;
+  S.token = data.token;
+  S.user = data.user;
   localStorage.setItem('rasa_token', S.token);
   localStorage.setItem('rasa_user', JSON.stringify(S.user));
   updateNav();
@@ -659,23 +741,27 @@ function onAuth(data) {
 }
 
 function logout() {
-  S.token = null; S.user = null;
-  localStorage.removeItem('rasa_token'); localStorage.removeItem('rasa_user');
-  updateNav(); goPage('home'); toast('Signed out', '');
+  S.token = null;
+  S.user = null;
+  localStorage.removeItem('rasa_token');
+  localStorage.removeItem('rasa_user');
+  updateNav();
+  goPage('home');
+  toast('Signed out', '');
 }
 
 // ═══════════════════════════════════════════
-// LOAD ALL RESTAURANTS (cached)
+// LOAD ALL RESTAURANTS
 // ═══════════════════════════════════════════
 async function loadAllRestaurants() {
   try {
     const data = await api('GET', '/restaurants/all');
     S.restaurants = data.restaurants;
-  } catch (e) { /* silent — will retry on page load */ }
+  } catch (e) {}
 }
 
 // ═══════════════════════════════════════════
-// SEARCH HELPER
+// SEARCH HELPERS
 // ═══════════════════════════════════════════
 function getSearch(id) {
   const el = document.getElementById('search-' + id);
@@ -687,17 +773,46 @@ function getSearch(id) {
 function clearSearch(id) {
   const el = document.getElementById('search-' + id);
   if (el) el.value = '';
-  const sc = document.getElementById('sc-' + id); if (sc) sc.style.display = 'none';
+  const sc = document.getElementById('sc-' + id);
+  if (sc) sc.style.display = 'none';
   if (id === 'first') filterFirst();
   else if (id === 'personal') filterPersonal();
   else renderGroupRecs();
 }
 function matches(r, q) {
   if (!q) return true;
-  const hay = [r.name, r.address, ...(r.cuisines || []), ...(r.tags || []),
-    ...(r.menu || []).flatMap(sec => sec.items.map(i => i.name + ' ' + i.description))
+  const hay = [
+    r.name,
+    r.address,
+    ...(r.cuisines || []),
+    ...(r.tags || []),
+    ...(r.menu || []).flatMap(sec => (sec.items || []).map(i => i.name + ' ' + i.description))
   ].join(' ').toLowerCase();
   return hay.includes(q);
+}
+
+// ═══════════════════════════════════════════
+// MAP VIEW
+// ═══════════════════════════════════════════
+function openMapView(mode) {
+  let list = [];
+
+  if (mode === 'first') list = S.firstFiltered || [];
+  if (mode === 'personal') list = S.personalFiltered || [];
+  if (mode === 'group') list = S.groupFiltered || [];
+
+  if (!list.length) {
+    toast('No restaurants to show on map', 'err');
+    return;
+  }
+
+  const ids = list.map(r => r._id || r.id).filter(Boolean).join(',');
+  const title =
+    mode === 'first' ? 'Top Picks' :
+    mode === 'personal' ? 'For You' :
+    'Group Recommendations';
+
+  window.location.href = `map.html?ids=${encodeURIComponent(ids)}&title=${encodeURIComponent(title)}`;
 }
 
 // ═══════════════════════════════════════════
@@ -707,7 +822,9 @@ function rcard(r, pct, from) {
   const tags = (r.tags || []).map(t =>
     `<span class="tag t-${t === 'veg' ? 'veg' : t === 'nonveg' ? 'nonveg' : 'budget'}">${t}</span>`
   ).join('') + (r.cuisines || []).map(c => `<span class="tag t-cuisine">${c}</span>`).join('');
+
   const id = r._id || r.id;
+
   return `<div class="rcard" onclick="openRest('${id}','${from}')">
     <div class="rcard-img">${r.emoji || '🍽️'}</div>
     <div class="rcard-body">
@@ -721,10 +838,12 @@ function rcard(r, pct, from) {
 function emptyHTML(icon, text, sub) {
   return `<div class="empty"><span class="empty-icon">${icon}</span><div class="empty-text">${text}</div><div class="empty-sub">${sub}</div></div>`;
 }
-function loadingHTML() { return `<div class="loading-center"><div class="spinner"></div> Loading…</div>`; }
+function loadingHTML() {
+  return `<div class="loading-center"><div class="spinner"></div> Loading…</div>`;
+}
 
 // ═══════════════════════════════════════════
-// FIRST-TIME PAGE
+// FIRST PAGE
 // ═══════════════════════════════════════════
 async function renderFirstPage() {
   const grid = document.getElementById('first-grid');
@@ -733,13 +852,20 @@ async function renderFirstPage() {
     const data = await api('GET', '/restaurants/top?limit=20');
     S.firstRests = data.restaurants;
     filterFirst();
-  } catch (e) { grid.innerHTML = emptyHTML('⚠️', 'Could not load restaurants', 'Check your connection and try again'); }
+  } catch (e) {
+    grid.innerHTML = emptyHTML('⚠️', 'Could not load restaurants', 'Check your connection and try again');
+  }
 }
 function filterFirst() {
   const q = getSearch('first');
   const list = S.firstRests.filter(r => matches(r, q));
+  S.firstFiltered = list;
+
   const grid = document.getElementById('first-grid');
-  if (!list.length) { grid.innerHTML = emptyHTML('🍽️', 'No results', 'Try a different search'); return; }
+  if (!list.length) {
+    grid.innerHTML = emptyHTML('🍽️', 'No results', 'Try a different search');
+    return;
+  }
   grid.innerHTML = `<div class="rgrid">${list.map(r => rcard(r, Math.round(r.rating * 20), 'first')).join('')}</div>`;
 }
 
@@ -748,24 +874,26 @@ function filterFirst() {
 // ═══════════════════════════════════════════
 function initPersonalPage() {
   if (!S.user) return;
-  // Init sliders from user prefs
   S.selCuisines = [...(S.user.preferredCuisines || [])];
   S.budget = S.user.budgetPreference || 2;
-  S.spice  = S.user.spicePreference  || 3;
+  S.spice = S.user.spicePreference || 3;
+
   document.getElementById('budget-sl').value = S.budget;
   document.getElementById('bv').textContent = ['₹','₹₹','₹₹₹'][S.budget - 1];
   document.getElementById('spice-sl').value = S.spice;
   document.getElementById('sv').textContent = S.spice;
   document.getElementById('personal-sub').textContent = `Hi ${S.user.name.split(' ')[0]}! Here's what we think you'll love.`;
-  // Cuisine chips
+
   document.getElementById('cuisine-chips').innerHTML = ALL_CUISINES.map(c =>
     `<button class="chip ${S.selCuisines.includes(c) ? 'on' : ''}" onclick="toggleC('${c}',this)">${c}</button>`
   ).join('');
+
   fetchPersonal();
 }
 function toggleC(c, el) {
   const i = S.selCuisines.indexOf(c);
-  if (i >= 0) S.selCuisines.splice(i, 1); else S.selCuisines.push(c);
+  if (i >= 0) S.selCuisines.splice(i, 1);
+  else S.selCuisines.push(c);
   el.classList.toggle('on');
 }
 function setSub(m) {
@@ -785,14 +913,23 @@ async function fetchPersonal() {
     S.currentSession = data.session;
     S.personalRests = data.restaurants;
     filterPersonal();
-  } catch (e) { grid.innerHTML = emptyHTML('⚠️', 'Could not load recommendations', e.message); }
+  } catch (e) {
+    grid.innerHTML = emptyHTML('⚠️', 'Could not load recommendations', e.message);
+  }
 }
 function filterPersonal() {
   const q = getSearch('personal');
   const grid = document.getElementById('personal-grid');
-  if (!S.personalRests.length) { grid.innerHTML = emptyHTML('🍽️', 'No restaurants found', 'Adjust filters'); return; }
+
+  if (!S.personalRests.length) {
+    S.personalFiltered = [];
+    grid.innerHTML = emptyHTML('🍽️', 'No restaurants found', 'Adjust filters');
+    return;
+  }
+
   if (S.submode === 'surprise' && S.personalRests.length === 1) {
     const r = S.personalRests[0];
+    S.personalFiltered = [r];
     grid.innerHTML = `<div class="surprise-c"><div class="spin-icon">${r.emoji||'🍽️'}</div>
       <div style="font-family:var(--font-h);font-size:21px;font-weight:700;margin:1rem 0 .4rem">${r.name}</div>
       <div style="color:var(--text3);font-size:13px;margin-bottom:1.25rem">${r.address||''}</div>
@@ -802,13 +939,17 @@ function filterPersonal() {
       </div></div>`;
     return;
   }
+
   const list = S.personalRests.filter(r => matches(r, q));
-  grid.innerHTML = list.length ? `<div class="rgrid">${list.map(r => rcard(r, r.matchScore || Math.round(r.rating * 20), 'personal')).join('')}</div>`
+  S.personalFiltered = list;
+
+  grid.innerHTML = list.length
+    ? `<div class="rgrid">${list.map(r => rcard(r, r.matchScore || Math.round(r.rating * 20), 'personal')).join('')}</div>`
     : emptyHTML('🍽️', 'No results', 'Clear search or adjust filters');
 }
 
 // ═══════════════════════════════════════════
-// GROUP ROOM CODE SYSTEM
+// GROUP ROOM
 // ═══════════════════════════════════════════
 function renderGroupLobby() {
   document.getElementById('group-lobby-area').innerHTML = `
@@ -838,34 +979,49 @@ function showJoin() {
 
 async function doCreateRoom() {
   const btn = document.getElementById('create-room-btn');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
   try {
     const data = await api('POST', '/group/create');
     S.room = data.room;
     closeModal();
     goPage('room');
     renderRoom();
-  } catch (e) { toast(e.message, 'err'); }
-  btn.disabled = false; btn.textContent = 'Generate Room Code →';
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Generate Room Code →';
 }
 async function doJoinRoom() {
   const btn = document.getElementById('join-room-btn');
   const err = document.getElementById('join-err');
   const code = (document.getElementById('join-code').value || '').trim().toUpperCase();
-  if (!code || code.length !== 6) { err.textContent = 'Enter a valid 6-letter code'; err.style.display = 'block'; return; }
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  if (!code || code.length !== 6) {
+    err.textContent = 'Enter a valid 6-letter code';
+    err.style.display = 'block';
+    return;
+  }
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
   try {
     const data = await api('POST', '/group/join', { code });
     S.room = data.room;
     closeModal();
     goPage('room');
     renderRoom();
-  } catch (e) { err.textContent = e.message; err.style.display = 'block'; }
-  btn.disabled = false; btn.textContent = 'Join Room →';
+  } catch (e) {
+    err.textContent = e.message;
+    err.style.display = 'block';
+  }
+  btn.disabled = false;
+  btn.textContent = 'Join Room →';
 }
 
 async function renderRoom() {
-  const room = S.room; if (!room) return;
+  const room = S.room;
+  if (!room) return;
+
   document.getElementById('room-pg-title').textContent = 'Room ' + room.code;
   document.getElementById('room-pg-sub').textContent = room.members.length + ' member' + (room.members.length !== 1 ? 's' : '') + ' · ' + (String(room.host) === String(S.user?._id) ? 'You are the host' : 'You joined as member');
   document.getElementById('room-status-txt').textContent = room.members.length > 1 ? room.members.length + ' members in room' : 'Waiting for members…';
@@ -893,8 +1049,11 @@ async function renderRoom() {
       const data = await api('POST', '/group/recommend', { code: room.code });
       S.groupRests = data.restaurants;
       recsHTML = renderGroupRecsHTML(S.groupRests, '');
-    } catch (e) { recsHTML = emptyHTML('⚠️', 'Could not load recommendations', e.message); }
+    } catch (e) {
+      recsHTML = emptyHTML('⚠️', 'Could not load recommendations', e.message);
+    }
   } else {
+    S.groupFiltered = [];
     recsHTML = emptyHTML('👥', 'Need at least 2 members', 'Share the room code with friends');
   }
 
@@ -919,10 +1078,15 @@ async function renderRoom() {
           <div><div class="gb-title">Combined preferences</div><div class="gb-sub">Cuisines: ${allC.slice(0,4).join(', ')}${allC.length>4?' +more':''} · Budget: ${'₹'.repeat(avgB)} · Spice: ${avgS}/5</div></div>
           <div class="gb-av-row">${room.members.map((m,i)=>`<div class="gb-av" style="background:${COLORS[i%COLORS.length]}22;color:${COLORS[i%COLORS.length]}">${(m.name||'?').slice(0,2).toUpperCase()}</div>`).join('')}</div>
         </div>
-        <div class="search-wrap">
-          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input class="search-input" id="search-group-search" placeholder="Search restaurants for the group…" oninput="renderGroupRecs()">
-          <button class="search-clear" id="sc-group-search" onclick="clearSearch('group-search')">×</button>
+        <div class="results-head">
+          <div class="left">
+            <div class="search-wrap" style="margin-bottom:0">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input class="search-input" id="search-group-search" placeholder="Search restaurants for the group…" oninput="renderGroupRecs()">
+              <button class="search-clear" id="sc-group-search" onclick="clearSearch('group-search')">×</button>
+            </div>
+          </div>
+          <button class="map-btn" onclick="openMapView('group')">📍 View Map</button>
         </div>
         <div id="group-recs">${recsHTML}</div>
       </div>
@@ -931,30 +1095,49 @@ async function renderRoom() {
 
 function renderGroupRecsHTML(list, q) {
   const filtered = list.filter(r => matches(r, q));
-  if (!filtered.length) return emptyHTML('🍽️', 'No results', 'Try a different search');
+  S.groupFiltered = filtered;
+
+  if (!filtered.length) {
+    return emptyHTML('🍽️', 'No results', 'Try a different search');
+  }
   return `<div class="rgrid">${filtered.map(r => rcard(r, r.matchScore || Math.round(r.rating*20), 'room')).join('')}</div>`;
 }
 function renderGroupRecs() {
   const q = getSearch('group-search');
-  const el = document.getElementById('group-recs'); if (!el) return;
+  const el = document.getElementById('group-recs');
+  if (!el) return;
   el.innerHTML = renderGroupRecsHTML(S.groupRests || [], q);
 }
 async function kickMember(code, userId) {
   try {
     const data = await api('POST', `/group/${code}/kick`, { userId });
-    S.room = data.room; renderRoom();
-  } catch (e) { toast(e.message, 'err'); }
+    S.room = data.room;
+    renderRoom();
+  } catch (e) {
+    toast(e.message, 'err');
+  }
 }
 async function refreshRoom() {
   try {
     const data = await api('GET', `/group/${S.room.code}`);
-    S.room = data.room; renderRoom(); toast('Members refreshed', 'ok');
-  } catch (e) { toast(e.message, 'err'); }
+    S.room = data.room;
+    renderRoom();
+    toast('Members refreshed', 'ok');
+  } catch (e) {
+    toast(e.message, 'err');
+  }
 }
 function copyCode(code) {
   navigator.clipboard.writeText(code).catch(() => {});
   const btn = document.getElementById('copy-btn');
-  if (btn) { btn.textContent = '✓ Copied!'; btn.classList.add('done'); setTimeout(() => { btn.textContent = '📋 Copy code'; btn.classList.remove('done'); }, 2000); }
+  if (btn) {
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('done');
+    setTimeout(() => {
+      btn.textContent = '📋 Copy code';
+      btn.classList.remove('done');
+    }, 2000);
+  }
   toast('Code copied!', 'ok');
 }
 
@@ -968,13 +1151,22 @@ async function openRest(id, from) {
   document.getElementById('rest-bc').onclick = () => goPage(from === 'room' ? 'room' : from === 'first' ? 'first' : 'personal');
   document.getElementById('rd-back-btn').onclick = () => goPage(from === 'room' ? 'room' : from === 'first' ? 'first' : 'personal');
   document.getElementById('rd-go-btn').onclick = () => selectRest(id);
-  // find from cache
+
   let r = S.restaurants.find(x => String(x._id || x.id) === String(id))
        || S.personalRests.find(x => String(x._id || x.id) === String(id))
-       || S.firstRests.find(x => String(x._id || x.id) === String(id));
+       || S.firstRests.find(x => String(x._id || x.id) === String(id))
+       || S.groupRests.find(x => String(x._id || x.id) === String(id));
+
   if (!r) {
-    try { const d = await api('GET', '/restaurants/' + id); r = d.restaurant; } catch (e) { toast('Could not load restaurant', 'err'); return; }
+    try {
+      const d = await api('GET', '/restaurants/' + id);
+      r = d.restaurant;
+    } catch (e) {
+      toast('Could not load restaurant', 'err');
+      return;
+    }
   }
+
   S.currentRestId = id;
   const pct = r.matchScore || Math.round(r.rating * 20);
   document.getElementById('rd-name').textContent = r.name;
@@ -995,28 +1187,43 @@ async function openRest(id, from) {
       ${(sec.items || []).map(i => `<div class="mi"><div class="mi-l"><div class="mi-name">${i.name}</div><div class="mi-desc">${i.description}</div></div><div class="mi-price">₹${i.price}</div></div>`).join('')}
     </div>`).join('');
   document.getElementById('rd-stats').innerHTML = [
-    ['Cuisine', (r.cuisines || []).join(', ')], ['Price', '₹'.repeat(r.priceLevel)],
-    ['Spice', r.spiceLevel + '/5'], ['Rating', r.rating + ' ⭐'],
+    ['Cuisine', (r.cuisines || []).join(', ')],
+    ['Price', '₹'.repeat(r.priceLevel)],
+    ['Spice', r.spiceLevel + '/5'],
+    ['Rating', r.rating + ' ⭐'],
     ['Type', r.tags?.includes('veg') && r.tags?.includes('nonveg') ? 'Veg & Non-veg' : r.tags?.includes('veg') ? 'Vegetarian' : 'Non-vegetarian']
   ].map(([l, v]) => `<div class="stat-row"><span class="stat-l">${l}</span><span>${v}</span></div>`).join('');
-  // Similar
-  const similar = S.restaurants.filter(x => String(x._id||x.id) !== String(id) && (x.cuisines||[]).some(c => (r.cuisines||[]).includes(c))).slice(0, 2);
+
+  const similar = S.restaurants.filter(x =>
+    String(x._id||x.id) !== String(id) &&
+    (x.cuisines||[]).some(c => (r.cuisines||[]).includes(c))
+  ).slice(0, 2);
+
   document.getElementById('rd-similar').innerHTML = similar.length
     ? similar.map(s => `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openRest('${s._id||s.id}','${from}')"><div><div style="font-size:13px;font-weight:500">${s.emoji} ${s.name}</div><div style="font-size:11px;color:var(--text3)">${(s.cuisines||[]).join(', ')}</div></div><span style="color:var(--accent);font-size:12px">→</span></div>`).join('')
     : '<div style="font-size:12px;color:var(--text3)">None found</div>';
+
   goPage('restaurant');
 }
 
 async function selectRest(id) {
-  if (!S.user) { toast('Please log in to track visits', 'err'); return; }
-  if (!S.currentSession) { toast('Please get recommendations first', 'err'); return; }
+  if (!S.user) {
+    toast('Please log in to track visits', 'err');
+    return;
+  }
+  if (!S.currentSession) {
+    toast('Please get recommendations first', 'err');
+    return;
+  }
   try {
     await api('POST', '/recommend/select', { sessionId: S.currentSession._id, restaurantId: id });
     const r = S.restaurants.find(x => String(x._id||x.id) === String(id)) || S.personalRests.find(x => String(x._id||x.id) === String(id));
     toast('Logged "' + (r?.name || 'restaurant') + '" — rate it after your visit!', 'ok');
     checkPending();
     setTimeout(() => goPage('home'), 1000);
-  } catch (e) { toast(e.message, 'err'); }
+  } catch (e) {
+    toast(e.message, 'err');
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -1064,10 +1271,11 @@ async function fetchPendingFeedback() {
         </div>
       </div>`;
     }).join('');
-    // State per-feedback card
     window._fbState = {};
     data.sessions.forEach(s => { window._fbState[s._id] = { rating: 0, liked: null }; });
-  } catch (e) { list.innerHTML = emptyHTML('⚠️', 'Could not load feedback', e.message); }
+  } catch (e) {
+    list.innerHTML = emptyHTML('⚠️', 'Could not load feedback', e.message);
+  }
 }
 
 function setFbRating(sessionId, n) {
@@ -1081,22 +1289,26 @@ function setFbLike(sessionId, v) {
   if (!window._fbState[sessionId]) window._fbState[sessionId] = { rating: 0, liked: null };
   window._fbState[sessionId].liked = v;
   document.getElementById(`like-yes-${sessionId}`).className = 'like-b' + (v === true ? ' yes' : '');
-  document.getElementById(`like-no-${sessionId}`).className  = 'like-b' + (v === false ? ' no' : '');
+  document.getElementById(`like-no-${sessionId}`).className = 'like-b' + (v === false ? ' no' : '');
 }
 async function submitFeedback(sessionId, restaurantId) {
   const state = (window._fbState || {})[sessionId] || {};
-  if (!state.rating) { toast('Please give a rating first', 'err'); return; }
+  if (!state.rating) {
+    toast('Please give a rating first', 'err');
+    return;
+  }
   const comment = document.getElementById('comment-' + sessionId)?.value || '';
   try {
     await api('POST', '/feedback/submit', { sessionId, restaurantId, rating: state.rating, liked: state.liked, comment });
     document.getElementById('fb-' + sessionId).style.display = 'none';
-    // Refresh user from server to get updated prefs
     const prof = await api('GET', '/auth/profile');
     S.user = prof.user;
     localStorage.setItem('rasa_user', JSON.stringify(S.user));
     toast('Feedback saved! Recommendations updated. 🎉', 'ok');
     checkPending();
-  } catch (e) { toast(e.message, 'err'); }
+  } catch (e) {
+    toast(e.message, 'err');
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -1108,7 +1320,10 @@ async function fetchHistory() {
   try {
     const data = await api('GET', '/recommend/history');
     const sessions = data.sessions.filter(s => s.selectedRestaurant);
-    if (!sessions.length) { list.innerHTML = emptyHTML('📋', 'No visits yet', 'Start exploring to build your history'); return; }
+    if (!sessions.length) {
+      list.innerHTML = emptyHTML('📋', 'No visits yet', 'Start exploring to build your history');
+      return;
+    }
     list.innerHTML = sessions.map(s => {
       const r = s.selectedRestaurant;
       const date = new Date(s.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -1117,7 +1332,9 @@ async function fetchHistory() {
         <div style="text-align:right">${s.feedbackGiven ? '<span class="tag t-veg" style="font-size:10px">Reviewed</span>' : '<span class="pend-chip">Pending</span>'}${!s.feedbackGiven ? `<div style="margin-top:7px"><button class="btn btn-s btn-g" onclick="goPage('feedback')">Rate now</button></div>` : ''}</div>
       </div>`;
     }).join('');
-  } catch (e) { list.innerHTML = emptyHTML('⚠️', 'Could not load history', e.message); }
+  } catch (e) {
+    list.innerHTML = emptyHTML('⚠️', 'Could not load history', e.message);
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -1131,7 +1348,6 @@ function renderProfile() {
   document.getElementById('prof-name-d').textContent = u.name;
   document.getElementById('prof-email-d').textContent = u.email;
   document.getElementById('prof-title').textContent = u.name + "'s Profile";
-  // Prefs
   document.getElementById('prof-budget').value = u.budgetPreference || 2;
   document.getElementById('prof-bv').textContent = ['₹','₹₹','₹₹₹'][(u.budgetPreference || 2) - 1];
   document.getElementById('prof-spice').value = u.spicePreference || 3;
@@ -1139,7 +1355,6 @@ function renderProfile() {
   document.getElementById('prof-cuisines').innerHTML = ALL_CUISINES.map(c =>
     `<button class="chip ${(u.preferredCuisines||[]).includes(c) ? 'on' : ''}" onclick="this.classList.toggle('on')">${c}</button>`
   ).join('');
-  // Liked restaurants
   document.getElementById('liked-list').innerHTML = u.likedRestaurants?.length
     ? u.likedRestaurants.map(r => `<div style="font-size:13px;padding:7px 0;border-bottom:1px solid var(--border)">${typeof r === 'object' ? r.name : '...'}</div>`).join('')
     : '<div style="font-size:13px;color:var(--text3)">No liked restaurants yet.</div>';
@@ -1148,21 +1363,30 @@ function renderProfile() {
 async function savePreferences() {
   const cuisines = Array.from(document.querySelectorAll('#prof-cuisines .chip.on')).map(c => c.textContent);
   const budget = +document.getElementById('prof-budget').value;
-  const spice  = +document.getElementById('prof-spice').value;
+  const spice = +document.getElementById('prof-spice').value;
   try {
     const data = await api('PATCH', '/auth/preferences', { preferredCuisines: cuisines, budgetPreference: budget, spicePreference: spice });
     S.user = data.user;
     localStorage.setItem('rasa_user', JSON.stringify(S.user));
     toast('Preferences saved!', 'ok');
-  } catch (e) { toast(e.message, 'err'); }
+  } catch (e) {
+    toast(e.message, 'err');
+  }
 }
 
 // ═══════════════════════════════════════════
 // MODAL
 // ═══════════════════════════════════════════
-function openModal(html) { document.getElementById('modal-box').innerHTML = html; document.getElementById('modal-overlay').classList.add('open'); }
-function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
-function closeModalOut(e) { if (e.target === document.getElementById('modal-overlay')) closeModal(); }
+function openModal(html) {
+  document.getElementById('modal-box').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+function closeModalOut(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
 
 // ═══════════════════════════════════════════
 // TOAST
