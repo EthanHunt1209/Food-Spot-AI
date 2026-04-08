@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Food Spot AI — Smart Restaurant Recommender</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+:root{
+  --bg:#ffffff;--bg2:#fafaf8;--bg3:#f5f3ef;--bg4:#ede9e2;--bg5:#e2ddd5;
+  --border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.12);--border3:rgba(0,0,0,0.2);
+  --text:#1a1512;--text2:#5c5248;--text3:#9c9188;
+  --gold:#c9921a;--gold2:#e8b84b;--gold3:#f5d483;--gold-light:rgba(201,146,26,.1);
+  --orange:#e05e1a;--orange2:#f07340;--orange-light:rgba(224,94,26,.1);
+  --cream:#fdf8ef;--cream2:#fef6e4;
+  --green:#2d7a4f;--red:#c0392b;
+  --font-h:'Playfair Display',serif;--font-b:'Plus Jakarta Sans',sans-serif;
+  --r:10px;--rl:16px;--rxl:22px;
+  --shadow:0 2px 16px rgba(0,0,0,0.08);--shadow2:0 8px 32px rgba(0,0,0,0.12);--shadow3:0 16px 48px rgba(0,0,0,0.16);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-b);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg3)}::-webkit-scrollbar-thumb{background:var(--gold3);border-radius:3px}
+.page{display:none;min-height:100vh;animation:fadeUp .28s ease}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.96);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem;box-shadow:0 1px 12px rgba(0,0,0,0.06)}
+.logo{font-family:var(--font-h);font-size:22px;font-weight:800;color:var(--gold);cursor:pointer;letter-spacing:-.3px;user-select:none;display:flex;align-items:center;gap:8px}
+.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--gold),var(--orange));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(201,146,26,.3)}
+.logo em{color:var(--orange);font-style:normal}
+.nav-r{display:flex;align-items:center;gap:6px}
+.nav-btn{padding:7px 15px;border-radius:var(--r);font-size:13px;cursor:pointer;border:none;font-family:var(--font-b);transition:all .18s;background:none;color:var(--text2);font-weight:500}
+.nav-btn:hover{color:var(--text);background:var(--bg3)}
+.nav-btn.hi{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#fff;font-weight:600;box-shadow:0 2px 10px rgba(201,146,26,.3)}
+.nav-btn.hi:hover{transform:translateY(-1px);box-shadow:0 4px 18px rgba(201,146,26,.4)}
+.nav-badge{background:var(--orange);color:#fff;border-radius:12px;padding:1px 7px;font-size:10px;margin-left:3px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.user-pill{display:flex;align-items:center;gap:8px;padding:5px 12px 5px 7px;border-radius:20px;background:var(--bg3);border:1px solid var(--border2);cursor:pointer;transition:all .18s}
+.user-pill:hover{background:var(--bg4);border-color:var(--gold3)}
+.user-av{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--orange));color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+.user-name{font-size:12px;color:var(--text2);font-weight:500}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:11px 22px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--font-b);transition:all .2s}
+.btn-p{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#fff;box-shadow:0 2px 12px rgba(201,146,26,.25)}
+.btn-p:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(201,146,26,.35)}
+.btn-o{background:linear-gradient(135deg,var(--orange),var(--orange2));color:#fff;box-shadow:0 2px 12px rgba(224,94,26,.25)}
+.btn-o:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(224,94,26,.35)}
+.btn-g{background:transparent;color:var(--text2);border:1.5px solid var(--border2)}
+.btn-g:hover{color:var(--text);background:var(--bg3);border-color:var(--gold3)}
+.btn-s{padding:7px 15px;font-size:12px}
+.btn-w{width:100%;justify-content:center}
+.btn-danger{background:rgba(192,57,43,.08);color:var(--red);border:1.5px solid rgba(192,57,43,.2)}
+.btn-danger:hover{background:rgba(192,57,43,.14)}
+.btn-ok{background:rgba(45,122,79,.08);color:var(--green);border:1.5px solid rgba(45,122,79,.2)}
+.btn-ok:hover{background:rgba(45,122,79,.14)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;pointer-events:none}
+
+/* FORM */
+.f-group{margin-bottom:.9rem}
+.f-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.38rem;display:block;font-weight:600}
+.f-input{width:100%;background:var(--bg);border:1.5px solid var(--border2);border-radius:var(--r);padding:11px 14px;font-size:14px;font-family:var(--font-b);color:var(--text);outline:none;transition:all .18s}
+.f-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,146,26,.1)}
+.f-input::placeholder{color:var(--text3)}
+.f-err{font-size:12px;color:var(--red);margin-top:.38rem;display:none;padding:8px 11px;background:rgba(192,57,43,.06);border-radius:var(--r);border:1px solid rgba(192,57,43,.15)}
+
+/* TAGS */
+.tag{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.t-veg{background:rgba(45,122,79,.1);color:var(--green)}
+.t-nonveg{background:rgba(224,94,26,.1);color:var(--orange)}
+.t-budget{background:rgba(201,146,26,.1);color:var(--gold)}
+.t-cuisine{background:var(--bg4);color:var(--text2)}
+.t-spicy{background:rgba(192,57,43,.1);color:var(--red)}
+
+/* CHIPS */
+.chip{display:inline-flex;align-items:center;padding:6px 13px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid var(--border2);color:var(--text2);background:var(--bg);transition:all .15s;font-family:var(--font-b)}
+.chip:hover{color:var(--text);background:var(--bg3);border-color:var(--gold3)}
+.chip.on{background:var(--gold-light);color:var(--gold);border-color:var(--gold3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+
+/* SLIDER */
+.sl-row{display:flex;align-items:center;gap:12px}
+.sl-row label{font-size:12px;color:var(--text3);min-width:62px;font-weight:500}
+.sl-row input[type=range]{flex:1;-webkit-appearance:none;height:4px;background:var(--bg4);border-radius:2px;outline:none}
+.sl-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--gold);border-radius:50%;cursor:pointer;box-shadow:0 1px 4px rgba(201,146,26,.4)}
+.sl-val{font-size:13px;font-weight:700;color:var(--gold);min-width:28px;text-align:right}
+
+/* PAGE SHELL */
+.ihead{background:linear-gradient(135deg,var(--cream) 0%,var(--bg3) 100%);border-bottom:1px solid var(--border);padding:2rem 2rem 1.75rem}
+.ihead-inner{max-width:1100px;margin:0 auto}
+.breadcrumb{font-size:12px;color:var(--text3);cursor:pointer;margin-bottom:.75rem;display:inline-flex;align-items:center;gap:4px;font-weight:500;transition:color .15s}
+.breadcrumb:hover{color:var(--gold)}
+.pg-title{font-family:var(--font-h);font-size:clamp(22px,3vw,34px);font-weight:800;letter-spacing:-.5px;margin-bottom:4px;color:var(--text)}
+.pg-sub{font-size:13px;color:var(--text2)}
+.pc{max-width:1100px;margin:0 auto;padding:2rem}
+.sec-label{font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.6rem}
+
+/* SEARCH + MAP BUTTON */
+.results-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:1rem;flex-wrap:wrap}
+.results-head .left{flex:1;min-width:220px}
+.search-wrap{position:relative;margin-bottom:1.5rem}
+.search-wrap svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--text3);fill:none;stroke-width:2;stroke-linecap:round;pointer-events:none}
+.search-input{width:100%;background:var(--bg);border:1.5px solid var(--border2);border-radius:var(--r);padding:11px 40px 11px 42px;font-size:14px;font-family:var(--font-b);color:var(--text);outline:none;transition:all .18s;box-shadow:var(--shadow)}
+.search-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,146,26,.1)}
+.search-input::placeholder{color:var(--text3)}
+.search-clear{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;line-height:1;display:none;padding:0}
+.search-clear:hover{color:var(--text2)}
+.map-btn{display:inline-flex;align-items:center;gap:6px;padding:11px 17px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--border2);font-family:var(--font-b);transition:all .18s;background:var(--bg);color:var(--text);box-shadow:var(--shadow)}
+.map-btn:hover{background:var(--bg3);border-color:var(--gold3);color:var(--gold)}
+
+/* RESTAURANT GRID */
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(295px,1fr));gap:14px}
+.rcard{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rl);overflow:hidden;cursor:pointer;transition:all .22s;box-shadow:var(--shadow)}
+.rcard:hover{border-color:var(--gold3);transform:translateY(-3px);box-shadow:0 12px 36px rgba(0,0,0,0.12)}
+.rcard-img{height:130px;background:linear-gradient(135deg,var(--cream),var(--bg4));display:flex;align-items:center;justify-content:center;font-size:44px;position:relative}
+.rcard-img::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,rgba(0,0,0,0.04))}
+.rcard-body{padding:1.15rem}
+.rcard-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px}
+.rcard-name{font-family:var(--font-h);font-size:15px;font-weight:700;letter-spacing:-.1px;color:var(--text)}
+.mp{font-family:var(--font-h);font-size:18px;font-weight:800;color:var(--gold);line-height:1}
+.ml{font-size:10px;color:var(--text3);text-align:right;font-weight:500}
+.rcard-meta{font-size:11px;color:var(--text3);margin-bottom:8px}
+.rcard-tags{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:9px}
+.mbar{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-bottom:10px}
+.mbar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--orange),var(--gold));transition:width .5s ease}
+.rcard-foot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);padding-top:8px;font-size:12px;color:var(--text2)}
+
+/* DETAIL */
+.dhead{background:linear-gradient(135deg,var(--cream) 0%,var(--bg3) 100%);border-bottom:1px solid var(--border);padding:2rem}
+.dhead-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr auto;gap:2rem;align-items:start}
+.d-title{font-family:var(--font-h);font-size:clamp(24px,4vw,40px);font-weight:800;letter-spacing:-.8px;margin-bottom:5px;color:var(--text)}
+.d-addr{font-size:13px;color:var(--text2);margin-bottom:1rem}
+.info-pill{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:20px;font-size:12px;border:1.5px solid var(--border2);color:var(--text2);background:var(--bg);margin:0 4px 4px 0;font-weight:500}
+.big-match{text-align:center;padding:1.1rem 1.4rem;background:linear-gradient(135deg,var(--cream2),rgba(201,146,26,.12));border:2px solid var(--gold3);border-radius:var(--rl);box-shadow:0 4px 16px rgba(201,146,26,.15)}
+.bm-num{font-family:var(--font-h);font-size:38px;font-weight:800;color:var(--gold);line-height:1}
+.bm-label{font-size:10px;color:var(--text3);margin-top:2px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.dbody{max-width:1100px;margin:0 auto;padding:2rem;display:grid;grid-template-columns:1fr 330px;gap:1.75rem}
+.menu-sec{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rl);padding:1.4rem;margin-bottom:13px;box-shadow:var(--shadow)}
+.menu-sec-t{font-family:var(--font-h);font-size:14px;font-weight:700;color:var(--gold);margin-bottom:.9rem;display:flex;align-items:center;gap:8px}
+.menu-sec-t::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--gold3),transparent)}
+.mi{display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border)}
+.mi:last-child{border-bottom:none;padding-bottom:0}
+.mi-l{flex:1;padding-right:12px}
+.mi-name{font-size:13px;font-weight:600;margin-bottom:2px}
+.mi-desc{font-size:11px;color:var(--text3);line-height:1.5}
+.mi-price{font-size:13px;font-weight:700;color:var(--gold);white-space:nowrap}
+.sb-card{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rl);padding:1.4rem;margin-bottom:13px;box-shadow:var(--shadow)}
+.sb-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--text2);margin-bottom:.9rem}
+.stat-row{display:flex;justify-content:space-between;font-size:13px;padding:7px 0;border-bottom:1px solid var(--border)}
+.stat-row:last-child{border-bottom:none}
+.stat-l{color:var(--text3)}
+
+/* AUTH PAGE */
+.auth-wrap{min-height:calc(100vh - 62px);display:flex;align-items:center;justify-content:center;padding:2rem;background:linear-gradient(135deg,var(--cream) 0%,var(--bg3) 50%,var(--bg2) 100%)}
+.auth-card{background:var(--bg);border:1.5px solid var(--border2);border-radius:var(--rxl);padding:2.25rem;width:100%;max-width:430px;box-shadow:var(--shadow3)}
+.auth-title{font-family:var(--font-h);font-size:25px;font-weight:800;margin-bottom:.4rem;color:var(--text)}
+.auth-sub{font-size:13px;color:var(--text2);margin-bottom:1.8rem;line-height:1.65}
+.auth-switch{font-size:13px;color:var(--text3);text-align:center;margin-top:1.1rem}
+.auth-switch a{color:var(--gold);cursor:pointer;text-decoration:none;font-weight:600}
+.auth-switch a:hover{text-decoration:underline}
+.pref-section{background:var(--bg3);border-radius:var(--r);padding:1.1rem;margin-bottom:.9rem;border:1.5px solid var(--border)}
+.pref-sec-title{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.7rem;font-weight:600}
+.pw-wrap{position:relative;margin-bottom:.9rem}
+.pw-wrap .f-input{margin-bottom:0;padding-right:42px}
+.eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px;padding:2px;line-height:1}
+.eye-btn:hover{color:var(--text2)}
+.strength-bar{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-bottom:.55rem}
+.strength-fill{height:100%;border-radius:2px;transition:width .3s,background .3s}
+
+/* OTP */
+.otp-wrap{display:flex;gap:9px;justify-content:center;margin-bottom:1.15rem}
+.otp-inp{width:48px;height:56px;text-align:center;font-family:var(--font-h);font-size:22px;font-weight:700;color:var(--gold);background:var(--bg3);border:1.5px solid var(--border2);border-radius:var(--r);outline:none;transition:all .18s}
+.otp-inp:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,146,26,.15)}
+.otp-resend{font-size:12px;color:var(--text3);text-align:center;margin-bottom:1rem}
+.otp-resend a{color:var(--gold);cursor:pointer;font-weight:600}
+.otp-resend a:hover{text-decoration:underline}
+
+/* FILTER BAR */
+.filter-bar{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rl);padding:1.3rem;margin-bottom:1.5rem;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;box-shadow:var(--shadow)}
+.fg{display:flex;flex-direction:column;gap:7px;flex:1;min-width:130px}
+.fg-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+
+/* GROUP ROOM */
+.lobby-wrap{max-width:500px;margin:0 auto;padding:2.5rem 0}
+.lobby-title{font-family:var(--font-h);font-size:clamp(22px,4vw,32px);font-weight:800;letter-spacing:-.6px;margin-bottom:.5rem;text-align:center;color:var(--text)}
+.lobby-sub{font-size:13px;color:var(--text2);text-align:center;margin-bottom:2rem;line-height:1.65}
+.lobby-opts{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:1.5rem}
+.lopt{background:var(--bg);border:1.5px solid var(--border2);border-radius:var(--rl);padding:1.6rem 1.4rem;cursor:pointer;transition:all .22s;text-align:center;position:relative;box-shadow:var(--shadow)}
+.lopt:hover{border-color:var(--gold3);transform:translateY(-2px);box-shadow:var(--shadow2)}
+.lopt.feat{border-color:var(--gold3);background:var(--cream2)}
+.lopt-icon{font-size:30px;margin-bottom:.7rem;display:block}
+.lopt-title{font-family:var(--font-h);font-size:16px;font-weight:700;margin-bottom:4px;color:var(--text)}
+.lopt-desc{font-size:12px;color:var(--text2);line-height:1.5}
+.lopt-tag{position:absolute;top:10px;right:10px;background:var(--gold-light);color:var(--gold);border:1.5px solid var(--gold3);padding:2px 9px;border-radius:12px;font-size:10px;font-weight:700}
+.room-grid{display:grid;grid-template-columns:290px 1fr;gap:16px}
+.room-panel{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rl);padding:1.5rem;box-shadow:var(--shadow)}
+.code-display{background:var(--cream2);border:2px solid var(--gold3);border-radius:var(--rl);padding:1.4rem;text-align:center;margin-bottom:1.15rem}
+.cd-label{font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.4rem;font-weight:700}
+.cd-val{font-family:var(--font-h);font-size:36px;font-weight:800;letter-spacing:9px;color:var(--text);margin-bottom:.55rem}
+.cd-note{font-size:11px;color:var(--text3);margin-bottom:.55rem}
+.copy-btn{background:var(--bg3);border:1.5px solid var(--border2);border-radius:var(--r);padding:6px 15px;font-size:12px;color:var(--text2);cursor:pointer;font-family:var(--font-b);transition:all .15s;font-weight:500}
+.copy-btn:hover{color:var(--text);background:var(--bg4);border-color:var(--gold3)}
+.copy-btn.done{color:var(--green);border-color:rgba(45,122,79,.3)}
+.rdot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;animation:pulse 1.5s infinite}
+.mrow{display:flex;align-items:center;justify-content:space-between;padding:8px 11px;background:var(--bg3);border-radius:var(--r);margin-bottom:5px;border:1.5px solid var(--border)}
+.m-left{display:flex;align-items:center;gap:10px}
+.m-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.m-name{font-size:13px;font-weight:600}
+.m-kick{background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:2px 5px;transition:color .15s;line-height:1}
+.m-kick:hover{color:var(--red)}
+.pref-mini{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px}
+.gbanner{background:linear-gradient(135deg,var(--cream2),var(--gold-light));border:1.5px solid var(--gold3);border-radius:var(--rl);padding:1.15rem 1.3rem;margin-bottom:1.3rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.gb-icon{font-size:26px}
+.gb-title{font-family:var(--font-h);font-size:14px;font-weight:700;margin-bottom:2px;color:var(--text)}
+.gb-sub{font-size:11px;color:var(--text2)}
+.gb-av-row{display:flex;margin-left:auto}
+.gb-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:2px solid var(--bg);margin-left:-5px}
+
+/* FEEDBACK */
+.fb-card{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rl);padding:1.85rem;margin-bottom:17px;box-shadow:var(--shadow)}
+.stars-row{display:flex;gap:6px;margin:8px 0 14px}
+.star-b{font-size:26px;color:var(--bg4);cursor:pointer;background:none;border:none;transition:all .1s;line-height:1;padding:0}
+.star-b.lit{color:var(--gold2)}
+.star-b:hover{transform:scale(1.15)}
+textarea{width:100%;background:var(--bg3);border:1.5px solid var(--border2);border-radius:var(--r);color:var(--text);padding:11px;font-size:13px;font-family:var(--font-b);resize:vertical;min-height:72px;outline:none;margin-bottom:11px;transition:border-color .18s}
+textarea:focus{border-color:var(--gold)}
+.like-row{display:flex;gap:9px;margin-bottom:.95rem}
+.like-b{flex:1;padding:10px;border-radius:var(--r);font-size:13px;cursor:pointer;border:1.5px solid var(--border2);background:var(--bg3);color:var(--text2);font-family:var(--font-b);transition:all .18s;display:flex;align-items:center;justify-content:center;gap:5px;font-weight:500}
+.like-b.yes{background:rgba(45,122,79,.1);color:var(--green);border-color:rgba(45,122,79,.3)}
+.like-b.no{background:rgba(192,57,43,.09);color:var(--red);border-color:rgba(192,57,43,.2)}
+
+/* DROPDOWN FEEDBACK ITEMS */
+.fb-dropdown-wrap{margin-top:1rem;border-top:1.5px solid var(--border);padding-top:1rem}
+.fb-dropdown-title{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:.7rem;display:flex;align-items:center;gap:6px}
+.fb-select-wrap{position:relative;margin-bottom:.8rem}
+.fb-select{width:100%;background:var(--bg);border:1.5px solid var(--border2);border-radius:var(--r);padding:10px 14px;font-size:13px;font-family:var(--font-b);color:var(--text);outline:none;cursor:pointer;transition:border-color .18s;appearance:none}
+.fb-select:focus{border-color:var(--gold)}
+.fb-select-arrow{position:absolute;right:13px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text3);font-size:12px}
+.selected-items-container{display:flex;flex-direction:column;gap:9px;margin-top:.5rem}
+.item-fb-row{background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--r);padding:.85rem;position:relative}
+.item-fb-row-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
+.item-fb-name{font-size:13px;font-weight:600}
+.item-fb-cat{font-size:10px;color:var(--text3);margin-left:5px;background:var(--bg4);padding:1px 7px;border-radius:10px}
+.remove-item-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:17px;line-height:1;transition:color .15s}
+.remove-item-btn:hover{color:var(--red)}
+.ifb-stars{display:flex;gap:4px;margin-bottom:.45rem}
+.ifb-star{font-size:20px;color:var(--bg4);cursor:pointer;background:none;border:none;padding:0;line-height:1;transition:color .1s}
+.ifb-star.lit{color:var(--gold2)}
+.ifb-like-row{display:flex;gap:7px}
+.ifb-like{padding:4px 11px;border-radius:20px;font-size:11px;cursor:pointer;border:1.5px solid var(--border2);background:transparent;color:var(--text3);font-family:var(--font-b);transition:all .15s;font-weight:500}
+.ifb-like.yes{background:rgba(45,122,79,.1);color:var(--green);border-color:rgba(45,122,79,.25)}
+.ifb-like.no{background:rgba(192,57,43,.09);color:var(--red);border-color:rgba(192,57,43,.2)}
+
+/* HISTORY */
+.hist-item{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rl);padding:1.15rem 1.3rem;margin-bottom:11px;display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;box-shadow:var(--shadow);cursor:pointer;transition:all .2s}
+.hist-item:hover{border-color:var(--gold3);box-shadow:var(--shadow2)}
+.hi-name{font-family:var(--font-h);font-size:15px;font-weight:700;margin-bottom:2px;color:var(--text)}
+.hi-meta{font-size:11px;color:var(--text3)}
+.pend-chip{background:rgba(224,94,26,.1);color:var(--orange);border:1.5px solid rgba(224,94,26,.22);padding:2px 10px;border-radius:12px;font-size:11px;font-weight:600}
+
+/* HISTORY DETAIL MODAL */
+.hist-detail{margin-top:1.1rem;background:var(--bg3);border-radius:var(--r);padding:1rem;border:1.5px solid var(--border)}
+.hd-stars{display:flex;gap:4px;margin:.4rem 0}
+.hd-star{font-size:17px;color:var(--bg4)}
+.hd-star.lit{color:var(--gold2)}
+.hd-comment{font-size:12px;color:var(--text2);font-style:italic;margin:.4rem 0;line-height:1.55}
+.hd-items{margin-top:.7rem}
+.hd-item-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
+.hd-item-row:last-child{border-bottom:none}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg);border:1.5px solid var(--border2);border-radius:var(--rxl);padding:1.85rem;max-width:430px;width:90%;animation:fadeUp .22s ease;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow3)}
+.modal-title{font-family:var(--font-h);font-size:20px;font-weight:800;margin-bottom:.4rem;color:var(--text)}
+.modal-sub{font-size:13px;color:var(--text2);margin-bottom:1.3rem;line-height:1.65}
+.code-big{font-family:var(--font-h);font-size:26px;letter-spacing:7px;text-align:center;color:var(--gold);text-transform:uppercase;background:var(--bg3);border:1.5px solid var(--border2);border-radius:var(--r);padding:11px 14px;width:100%;outline:none;margin-bottom:.75rem;transition:all .18s}
+.code-big:focus{border-color:var(--gold)}
+.code-big::placeholder{font-size:14px;letter-spacing:2px;color:var(--text3)}
+
+/* SPINNER / LOADING */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(201,146,26,.25);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-center{display:flex;align-items:center;justify-content:center;padding:4rem;gap:10px;color:var(--text3);font-size:13px}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--bg);border:1.5px solid var(--border2);border-radius:var(--rl);padding:12px 20px;font-size:13px;z-index:999;transform:translateY(70px);opacity:0;transition:all .28s;box-shadow:var(--shadow3);max-width:330px;font-weight:500}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-color:rgba(45,122,79,.3);color:var(--green);background:rgba(45,122,79,.06)}
+.toast.err{border-color:rgba(192,57,43,.3);color:var(--red);background:rgba(192,57,43,.06)}
+
+/* HOME */
+.hero{padding:4.5rem 2rem 3rem;max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center}
+.hero-tag{display:inline-block;background:linear-gradient(135deg,var(--gold-light),rgba(224,94,26,.08));color:var(--gold);border:1.5px solid var(--gold3);padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.07em;margin-bottom:1.15rem;text-transform:uppercase}
+.hero-title{font-family:var(--font-h);font-size:clamp(36px,5vw,58px);font-weight:900;line-height:1.07;letter-spacing:-1.5px;margin-bottom:.95rem;color:var(--text)}
+.hero-title .hl{color:var(--gold)}
+.hero-title .hl2{color:var(--orange)}
+.hero-sub{font-size:15px;color:var(--text2);line-height:1.72;margin-bottom:1.6rem;max-width:420px}
+.hero-cta{display:flex;gap:11px;flex-wrap:wrap}
+.hv{position:relative;height:320px}
+.hcard{position:absolute;background:var(--bg);border:1.5px solid var(--border2);border-radius:var(--rl);padding:1.3rem;width:250px;box-shadow:var(--shadow2)}
+.hcard:nth-child(1){top:0;right:0;transform:rotate(4deg);opacity:.35}
+.hcard:nth-child(2){top:28px;right:28px;transform:rotate(-1.5deg);opacity:.6}
+.hcard:nth-child(3){top:52px;right:52px;transform:rotate(.5deg)}
+.hc-name{font-family:var(--font-h);font-size:15px;font-weight:700;margin-bottom:3px;color:var(--text)}
+.hc-meta{font-size:11px;color:var(--text3);margin-bottom:10px}
+.hc-pct{font-family:var(--font-h);font-size:26px;font-weight:800;color:var(--gold)}
+.hc-bar{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-bottom:11px}
+.hc-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--orange),var(--gold))}
+.mc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:13px}
+.mc{background:var(--bg);border:1.5px solid var(--border2);border-radius:var(--rl);padding:1.6rem 1.4rem;cursor:pointer;transition:all .22s;position:relative;box-shadow:var(--shadow)}
+.mc:hover{border-color:var(--gold3);transform:translateY(-2px);box-shadow:var(--shadow2)}
+.mc.feat{border-color:var(--gold3);background:var(--cream2)}
+.mc.orange{border-color:rgba(224,94,26,.3);background:rgba(224,94,26,.03)}
+.mc.orange:hover{border-color:var(--orange2)}
+.mc-icon{font-size:26px;margin-bottom:.75rem;display:block}
+.mc-title{font-family:var(--font-h);font-size:16px;font-weight:700;margin-bottom:4px;color:var(--text)}
+.mc-desc{font-size:12px;color:var(--text2);line-height:1.58}
+.mc-arrow{position:absolute;top:1.3rem;right:1.3rem;color:var(--text3);font-size:15px;transition:all .18s}
+.mc:hover .mc-arrow{color:var(--gold);transform:translate(2px,-2px)}
+.empty{text-align:center;padding:3rem 2rem;color:var(--text3)}
+.empty-icon{font-size:36px;margin-bottom:.75rem;display:block;opacity:.4}
+.empty-text{font-size:14px;color:var(--text2);margin-bottom:.3rem;font-weight:500}
+.empty-sub{font-size:12px}
+.surprise-c{text-align:center;padding:3rem 2rem}
+.spin-icon{font-size:56px;animation:spinIn .4s ease;display:inline-block}
+@keyframes spinIn{from{transform:rotate(-25deg) scale(.7)}to{transform:rotate(0) scale(1)}}
+
+/* PROFILE */
+.profile-grid{display:grid;grid-template-columns:280px 1fr;gap:20px}
+.prof-card{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rl);padding:1.6rem;margin-bottom:14px;box-shadow:var(--shadow)}
+
+/* NEARBY MAP PAGE */
+#map-container{height:430px;border-radius:var(--rl);overflow:hidden;border:1.5px solid var(--border2);margin-bottom:1.6rem;position:relative;box-shadow:var(--shadow)}
+#nearby-map{width:100%;height:100%}
+.map-locate-btn{position:absolute;top:13px;right:13px;z-index:500;background:var(--bg);border:1.5px solid var(--border2);border-radius:var(--r);padding:8px 15px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-b);color:var(--text);display:flex;align-items:center;gap:5px;transition:all .18s;box-shadow:var(--shadow)}
+.map-locate-btn:hover{background:var(--bg3);border-color:var(--gold3)}
+.leaflet-tile-pane{filter:saturate(.85) brightness(1.02)}
+.leaflet-container{background:#f0ede8}
+.leaflet-popup-content-wrapper{background:var(--bg);border:1.5px solid var(--border2);border-radius:var(--rl);box-shadow:var(--shadow3);color:var(--text);font-family:var(--font-b)}
+.leaflet-popup-tip{background:var(--bg)}
+.leaflet-popup-content{margin:12px 16px;min-width:200px}
+.pu-name{font-family:var(--font-h);font-size:14px;font-weight:700;margin-bottom:3px;color:var(--text)}
+.pu-dist{font-size:12px;font-weight:600;color:var(--green);margin-bottom:4px}
+.pu-meta{font-size:11px;color:var(--text3);margin-bottom:6px}
+.pu-btn{display:block;width:100%;padding:8px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#fff;border:none;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-b);margin-top:8px}
+.user-marker{width:14px;height:14px;border-radius:50%;background:rgba(224,94,26,.9);border:2.5px solid #fff;box-shadow:0 0 0 6px rgba(224,94,26,.18),0 2px 8px rgba(0,0,0,.3);animation:ripple 2s ease-in-out infinite}
+@keyframes ripple{0%,100%{box-shadow:0 0 0 6px rgba(224,94,26,.18),0 2px 8px rgba(0,0,0,.3)}50%{box-shadow:0 0 0 12px rgba(224,94,26,.05),0 2px 8px rgba(0,0,0,.3)}}
+
+/* DECORATIVE DIVIDER */
+.section-divider{max-width:1100px;margin:0 auto;padding:0 2rem .5rem;display:flex;align-items:center;gap:14px}
+.section-divider span{font-size:11px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.1em;white-space:nowrap}
+.section-divider::before,.section-divider::after{content:'';flex:1;height:1.5px;background:linear-gradient(to right,var(--gold3),transparent)}
+.section-divider::before{background:linear-gradient(to left,var(--gold3),transparent)}
+
+@media(max-width:768px){
+  .hero{grid-template-columns:1fr;padding:2.5rem 1.5rem 2rem}
+  .hv{display:none}
+  .dbody{grid-template-columns:1fr}
+  .dhead-inner{grid-template-columns:1fr}
+  .room-grid{grid-template-columns:1fr}
+  .lobby-opts{grid-template-columns:1fr}
+  .profile-grid{grid-template-columns:1fr}
+  .pc{padding:1.25rem}
+  nav{padding:0 1rem}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo" onclick="goPage('home')">
+    <div class="logo-icon">🍽️</div>
+    Food Spot<em> AI</em>
+  </div>
+  <div class="nav-r" id="nav-r">
+    <button class="nav-btn" onclick="goPage('auth')">Login</button>
+    <button class="nav-btn hi" onclick="goPage('auth')">Get Started</button>
+  </div>
+</nav>
+<div class="toast" id="toast"></div>
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOut(event)">
+  <div class="modal" id="modal-box"></div>
+</div>
+
+<!-- ═══ HOME ═══ -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div>
+      <div class="hero-tag">🤖 AI-Powered · Personalized · Learns from you</div>
+      <h1 class="hero-title">Find your<br><span class="hl">perfect meal,</span><br><span class="hl2">every time.</span></h1>
+      <p class="hero-sub">Food Spot AI learns your taste, budget and spice preferences — and gets smarter after every visit and rating.</p>
+      <div class="hero-cta">
+        <button class="btn btn-p" onclick="requireAuth('personal')">Start discovering →</button>
+        <button class="btn btn-g" onclick="requireAuth('nearby')">📍 Find nearby</button>
+      </div>
+    </div>
+    <div class="hv">
+      <div class="hcard"><div class="hc-name">Noodle Street</div><div class="hc-meta">Chinese · Thai</div><div class="hc-pct">72%</div><div class="hc-bar"><div class="hc-fill" style="width:72%"></div></div><div><span class="tag t-veg">veg</span><span class="tag t-cuisine" style="margin-left:4px">Chinese</span></div></div>
+      <div class="hcard"><div class="hc-name">Biryani Palace</div><div class="hc-meta">Indian · MG Road</div><div class="hc-pct">88%</div><div class="hc-bar"><div class="hc-fill" style="width:88%"></div></div><div><span class="tag t-nonveg">non-veg</span><span class="tag t-spicy" style="margin-left:4px">🌶 hot</span></div></div>
+      <div class="hcard"><div class="hc-name">Andhra Spices</div><div class="hc-meta">South Indian · Patamata</div><div class="hc-pct">95%</div><div class="hc-bar"><div class="hc-fill" style="width:95%"></div></div><div><span class="tag t-veg">veg</span><span class="tag t-budget" style="margin-left:4px">budget</span></div></div>
+    </div>
+  </div>
+  <div class="section-divider"><span>Explore modes</span></div>
+  <div class="pc" style="padding-top:1rem">
+    <div class="mc-grid">
+      <div class="mc feat" onclick="requireAuth('personal')"><span class="mc-arrow">↗</span><span class="mc-icon">✨</span><div class="mc-title">For You</div><div class="mc-desc">Personalized by cuisine, budget &amp; spice. AI learns from your feedback.</div></div>
+      <div class="mc orange" onclick="requireAuth('group')"><span class="mc-arrow">↗</span><span class="mc-icon">👥</span><div class="mc-title">Group Mode</div><div class="mc-desc">Share a code — AI finds the best match for the whole group.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ AUTH ═══ -->
+<div class="page" id="page-auth">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <!-- LOGIN -->
+      <div id="auth-login">
+        <div class="auth-title">Welcome back 👋</div>
+        <div class="auth-sub">Sign in to get AI-powered recommendations</div>
+        <div class="f-group"><label class="f-label">Email</label><input class="f-input" id="login-email" type="email" placeholder="you@example.com"></div>
+        <div class="f-group">
+          <label class="f-label">Password</label>
+          <div class="pw-wrap"><input class="f-input" id="login-pw" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"><button class="eye-btn" onclick="togglePw('login-pw',this)">👁</button></div>
+        </div>
+        <div class="f-err" id="login-err"></div>
+        <button class="btn btn-p btn-w" id="login-btn" onclick="doLogin()" style="margin-bottom:.75rem">Sign in</button>
+        <div style="text-align:center;margin-bottom:.5rem"><button style="background:none;border:none;font-size:12px;color:var(--text3);cursor:pointer;font-family:var(--font-b)" onclick="showForgot()">Forgot password?</button></div>
+        <div class="auth-switch">No account? <a onclick="showReg()">Create one →</a></div>
+      </div>
+
+      <!-- REGISTER STEP 1 -->
+      <div id="auth-reg" style="display:none">
+        <div class="auth-title">Create account ✨</div>
+        <div class="auth-sub">We'll send a 6-digit code to verify your email</div>
+        <div class="f-group"><label class="f-label">Full Name</label><input class="f-input" id="reg-name" placeholder="Your name"></div>
+        <div class="f-group"><label class="f-label">Email</label><input class="f-input" id="reg-email" type="email" placeholder="you@example.com"></div>
+        <div class="f-group">
+          <label class="f-label">Password</label>
+          <div class="pw-wrap"><input class="f-input" id="reg-pw" type="password" placeholder="Min 6 characters" oninput="checkPwStrength('reg-pw','reg-str')"><button class="eye-btn" onclick="togglePw('reg-pw',this)">👁</button></div>
+          <div class="strength-bar"><div class="strength-fill" id="reg-str" style="width:0%"></div></div>
+        </div>
+        <div class="f-err" id="reg-err"></div>
+        <div class="pref-section">
+          <div class="pref-sec-title">Food preferences (optional — helps AI recommendations)</div>
+          <div style="margin-bottom:.7rem"><div style="font-size:11px;color:var(--text3);margin-bottom:.45rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em">Favourite cuisines</div><div class="chips" id="reg-cuisines"></div></div>
+          <div class="sl-row" style="margin-bottom:.55rem"><label>Budget</label><input type="range" min="1" max="3" step="1" value="2" id="reg-budget" oninput="document.getElementById('reg-bv').textContent=['₹','₹₹','₹₹₹'][this.value-1]"><span class="sl-val" id="reg-bv">₹₹</span></div>
+          <div class="sl-row"><label>Spice</label><input type="range" min="1" max="5" step="1" value="3" id="reg-spice" oninput="document.getElementById('reg-sv').textContent=this.value"><span class="sl-val" id="reg-sv">3</span></div>
+        </div>
+        <button class="btn btn-p btn-w" id="reg-btn" onclick="sendOTP()">Send verification code →</button>
+        <div class="auth-switch">Have an account? <a onclick="showLogin()">Sign in →</a></div>
+      </div>
+
+      <!-- REGISTER STEP 2 — OTP -->
+      <div id="auth-otp" style="display:none">
+        <div class="auth-title">Check your email 📬</div>
+        <div class="auth-sub" id="otp-sub">We sent a 6-digit code to <strong></strong>. Enter it below.</div>
+        <div class="otp-wrap">
+          <input class="otp-inp" id="o1" maxlength="1" oninput="otpMove(this,'o2')" onkeydown="otpBack(event,this,null)">
+          <input class="otp-inp" id="o2" maxlength="1" oninput="otpMove(this,'o3')" onkeydown="otpBack(event,this,'o1')">
+          <input class="otp-inp" id="o3" maxlength="1" oninput="otpMove(this,'o4')" onkeydown="otpBack(event,this,'o2')">
+          <input class="otp-inp" id="o4" maxlength="1" oninput="otpMove(this,'o5')" onkeydown="otpBack(event,this,'o3')">
+          <input class="otp-inp" id="o5" maxlength="1" oninput="otpMove(this,'o6')" onkeydown="otpBack(event,this,'o4')">
+          <input class="otp-inp" id="o6" maxlength="1" oninput="otpMove(this,null)" onkeydown="otpBack(event,this,'o5')" onchange="autoVerifyOTP()">
+        </div>
+        <div class="f-err" id="otp-err"></div>
+        <button class="btn btn-p btn-w" id="otp-btn" onclick="verifyOTP()">Verify &amp; create account</button>
+        <div class="otp-resend">Didn't get it? <a onclick="resendOTP()">Resend code</a> · <a onclick="showReg()">Change email</a></div>
+        <div style="margin-top:.75rem;background:rgba(201,146,26,.08);border:1px solid var(--gold3);border-radius:var(--r);padding:.75rem;font-size:12px;color:var(--text2)">
+          💡 <strong>Not receiving OTP?</strong> Check your spam/junk folder. If the issue persists, your server's SMTP settings may need to be configured. Contact support or try registering with a different email.
+        </div>
+      </div>
+
+      <!-- FORGOT PASSWORD -->
+      <div id="auth-forgot" style="display:none">
+        <div class="auth-title">Forgot password? 🔑</div>
+        <div class="auth-sub">Enter your email and we'll send a reset link.</div>
+        <div class="f-group"><label class="f-label">Email</label><input class="f-input" id="forgot-email" type="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doForgot()"></div>
+        <div class="f-err" id="forgot-err"></div>
+        <button class="btn btn-p btn-w" id="forgot-btn" onclick="doForgot()">Send reset link</button>
+        <div class="auth-switch"><a onclick="showLogin()">← Back to login</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PERSONAL ═══ -->
+<div class="page" id="page-personal">
+  <div class="ihead"><div class="ihead-inner">
+    <div class="breadcrumb" onclick="goPage('home')">← Home</div>
+    <div class="pg-title">✨ For You</div>
+    <div class="pg-sub" id="personal-sub">AI-powered recommendations tuned to your taste</div>
+  </div></div>
+  <div class="pc">
+    <div class="results-head">
+      <div class="left">
+        <div class="search-wrap" style="margin-bottom:0">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input class="search-input" id="search-personal" placeholder="Search restaurants, cuisines, dishes…" oninput="filterPersonal()">
+          <button class="search-clear" id="sc-personal" onclick="clearSearch('personal')">×</button>
+        </div>
+      </div>
+      <button class="map-btn" onclick="openMapView('personal')">📍 View Map</button>
+    </div>
+    <div class="filter-bar">
+      <div class="fg"><div class="fg-label">Cuisine</div><div class="chips" id="cuisine-chips"></div></div>
+      <div class="fg" style="min-width:148px;max-width:185px"><div class="fg-label">Budget</div><div class="sl-row" style="margin:0"><input type="range" min="1" max="3" step="1" value="2" id="budget-sl" oninput="S.budget=+this.value;document.getElementById('bv').textContent=['₹','₹₹','₹₹₹'][this.value-1]"><span class="sl-val" id="bv">₹₹</span></div></div>
+      <div class="fg" style="min-width:148px;max-width:185px"><div class="fg-label">Spice</div><div class="sl-row" style="margin:0"><input type="range" min="1" max="5" step="1" value="3" id="spice-sl" oninput="S.spice=+this.value;document.getElementById('sv').textContent=this.value"><span class="sl-val" id="sv">3</span></div></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.3rem;align-items:center">
+      <button class="chip on" id="sub-regular" onclick="setSub('regular')">My Favorites</button>
+      <button class="chip" id="sub-new" onclick="setSub('new')">Try New</button>
+      <button class="chip" id="sub-surprise" onclick="setSub('surprise')">Surprise Me 🎲</button>
+      <button class="btn btn-p btn-s" style="margin-left:auto" id="get-recs-btn" onclick="fetchPersonal()">Get AI Recommendations</button>
+    </div>
+    <div id="personal-grid"></div>
+  </div>
+</div>
+
+<!-- ═══ NEARBY MAP ═══ -->
+<div class="page" id="page-nearby">
+  <div class="ihead"><div class="ihead-inner">
+    <div class="breadcrumb" onclick="goPage('home')">← Home</div>
+    <div class="pg-title">📍 Nearby Restaurants</div>
+    <div class="pg-sub">Restaurants near your location on a live map</div>
+  </div></div>
+  <div class="pc">
+    <div id="map-container">
+      <div id="nearby-map"></div>
+      <button class="map-locate-btn" id="map-locate-btn" onclick="locateAndLoad()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+        Locate Me
+      </button>
+    </div>
+    <div id="nearby-list"></div>
+  </div>
+</div>
+
+<!-- ═══ GROUP LOBBY ═══ -->
+<div class="page" id="page-group">
+  <div class="ihead"><div class="ihead-inner">
+    <div class="breadcrumb" onclick="goPage('home')">← Home</div>
+    <div class="pg-title">👥 Group Mode</div>
+    <div class="pg-sub">AI combines everyone's preferences to find the perfect spot</div>
+  </div></div>
+  <div class="pc"><div id="group-lobby-area"></div></div>
+</div>
+
+<!-- ═══ ROOM ═══ -->
+<div class="page" id="page-room">
+  <div class="ihead"><div class="ihead-inner">
+    <div class="breadcrumb" onclick="goPage('group')">← Change room</div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div class="pg-title" id="room-pg-title">Room —</div>
+      <div style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);padding:3px 12px;background:var(--bg3);border-radius:20px;border:1.5px solid var(--border)"><span class="rdot"></span><span id="room-status-txt">Waiting…</span></div>
+    </div>
+    <div class="pg-sub" id="room-pg-sub"></div>
+  </div></div>
+  <div class="pc"><div id="room-content"></div></div>
+</div>
+
+<!-- ═══ RESTAURANT DETAIL ═══ -->
+<div class="page" id="page-restaurant">
+  <div class="dhead"><div class="dhead-inner">
+    <div>
+      <div class="breadcrumb" id="rest-bc">← Back</div>
+      <div class="d-title" id="rd-name"></div>
+      <div class="d-addr" id="rd-addr"></div>
+      <div id="rd-badges" style="margin-bottom:.7rem"></div>
+      <div id="rd-tags"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end">
+      <div class="big-match"><div class="bm-num" id="rd-match">—</div><div class="bm-label">AI match score</div></div>
+      <button class="btn btn-p" id="rd-go-btn">I'll go here →</button>
+      <button class="btn btn-g btn-s" id="rd-back-btn">See other options</button>
+    </div>
+  </div></div>
+  <div class="dbody">
+    <div id="rd-menu"></div>
+    <div>
+      <div class="sb-card"><div class="sb-title">Restaurant Info</div><div id="rd-stats"></div></div>
+      <div class="sb-card"><div class="sb-title">You might also like</div><div id="rd-similar"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FEEDBACK ═══ -->
+<div class="page" id="page-feedback">
+  <div class="ihead"><div class="ihead-inner">
+    <div class="breadcrumb" onclick="goPage('home')">← Home</div>
+    <div class="pg-title">⭐ Rate Your Visit</div>
+    <div class="pg-sub">Your ratings train the AI to give better recommendations</div>
+  </div></div>
+  <div class="pc" style="max-width:660px"><div id="feedback-list"></div></div>
+</div>
+
+<!-- ═══ HISTORY ═══ -->
+<div class="page" id="page-history">
+  <div class="ihead"><div class="ihead-inner">
+    <div class="breadcrumb" onclick="goPage('home')">← Home</div>
+    <div class="pg-title">📋 Your History</div>
+    <div class="pg-sub">Past visits — tap a restaurant to see your full review</div>
+  </div></div>
+  <div class="pc" style="max-width:700px"><div id="history-list"></div></div>
+</div>
+
+<!-- ═══ PROFILE ═══ -->
+<div class="page" id="page-profile">
+  <div class="ihead"><div class="ihead-inner">
+    <div class="breadcrumb" onclick="goPage('home')">← Home</div>
+    <div class="pg-title" id="prof-title">Profile</div>
+    <div class="pg-sub">Manage your preferences</div>
+  </div></div>
+  <div class="pc">
+    <div class="profile-grid">
+      <div>
+        <div class="prof-card">
+          <div style="display:flex;align-items:center;gap:13px;margin-bottom:1.15rem">
+            <div style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--orange));color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-h);font-size:18px;font-weight:700" id="prof-av">?</div>
+            <div><div style="font-size:16px;font-weight:700" id="prof-name-d"></div><div style="font-size:12px;color:var(--text3)" id="prof-email-d"></div></div>
+          </div>
+          <button class="btn btn-danger btn-s btn-w" onclick="logout()">Sign out</button>
+        </div>
+        <div class="prof-card">
+          <div class="sb-title">Update Preferences</div>
+          <div style="margin-bottom:.7rem"><div class="fg-label" style="font-size:11px;color:var(--text3);margin-bottom:.45rem">Cuisines</div><div class="chips" id="prof-cuisines"></div></div>
+          <div class="sl-row" style="margin-bottom:.6rem"><label>Budget</label><input type="range" min="1" max="3" step="1" value="2" id="prof-budget" oninput="document.getElementById('prof-bv').textContent=['₹','₹₹','₹₹₹'][this.value-1]"><span class="sl-val" id="prof-bv">₹₹</span></div>
+          <div class="sl-row" style="margin-bottom:.95rem"><label>Spice</label><input type="range" min="1" max="5" step="1" value="3" id="prof-spice" oninput="document.getElementById('prof-sv').textContent=this.value"><span class="sl-val" id="prof-sv">3</span></div>
+          <button class="btn btn-ok btn-s btn-w" onclick="savePreferences()">Save Preferences</button>
+        </div>
+      </div>
+      <div class="prof-card">
+        <div class="sb-title">Liked Restaurants</div>
+        <div id="liked-list"><div style="font-size:13px;color:var(--text3)">No liked restaurants yet. Rate visits to build this list!</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════
+const API = 'https://food-spot-ai.onrender.com/api';
+const COLORS = ['#c9921a','#e05e1a','#2d7a4f','#1a6ec9','#7a2d8f','#c92d2d'];
+const ALL_CUISINES = ['Indian','Chinese','Thai','South Indian','Andhra','Italian','Continental'];
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+const S = {
+  user: null, token: null,
+  allRests: [],
+  personalRests: [], personalFiltered: [], groupRests: [], groupFiltered: [],
+  currentSession: null, currentRestId: null, restFrom: 'personal',
+  selCuisines: [], budget: 2, spice: 3, submode: 'regular',
+  room: null,
+  pendingFeedback: [],
+  afterAuth: null,
+  regData: null,
+  nearbyMap: null, userMarker: null, radiusCircle: null, mapMarkers: {},
+  userLatLng: null,
+  page: 'home',
+  historyFeedbacks: {},
+};
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+(function boot() {
+  const t = localStorage.getItem('fsai_token'), u = localStorage.getItem('fsai_user');
+  if (t && u) { S.token = t; S.user = JSON.parse(u); updateNav(); checkPending(); }
+  document.getElementById('reg-cuisines').innerHTML = ALL_CUISINES.map(c =>
+    `<button class="chip" onclick="this.classList.toggle('on')">${c}</button>`).join('');
+  loadAllRests();
+})();
+
+// ═══════════════════════════════════════════
+// API HELPER
+// ═══════════════════════════════════════════
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json', ...(S.token ? { Authorization: 'Bearer ' + S.token } : {}) } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Request failed');
+  return data;
+}
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+function goPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  S.page = id; window.scrollTo(0, 0);
+  const map = { personal: initPersonalPage, group: renderGroupLobby, history: fetchHistory, feedback: fetchFeedback, profile: renderProfile, nearby: initNearby };
+  if (map[id]) map[id]();
+}
+function requireAuth(dest) {
+  if (S.user) { goPage(dest); return; }
+  S.afterAuth = dest; goPage('auth');
+}
+function updateNav() {
+  const nr = document.getElementById('nav-r');
+  if (!S.user) {
+    nr.innerHTML = `<button class="nav-btn" onclick="goPage('auth')">Login</button><button class="nav-btn hi" onclick="goPage('auth')">Get Started</button>`;
+    return;
+  }
+  const ini = S.user.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+  nr.innerHTML = `
+    <button class="nav-btn" onclick="goPage('history')">History</button>
+    <button class="nav-btn" onclick="goPage('feedback')">Feedback<span class="nav-badge" id="pending-dot" style="display:none">!</span></button>
+    <div class="user-pill" onclick="goPage('profile')"><div class="user-av">${ini}</div><span class="user-name">${S.user.name.split(' ')[0]}</span></div>
+    <button class="nav-btn hi" onclick="requireAuth('personal')">Discover</button>`;
+}
+
+// ═══════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════
+function _hideAllAuth() {
+  ['auth-login','auth-reg','auth-otp','auth-forgot'].forEach(id => document.getElementById(id).style.display = 'none');
+}
+function showLogin() { _hideAllAuth(); document.getElementById('auth-login').style.display = ''; }
+function showReg()   { _hideAllAuth(); document.getElementById('auth-reg').style.display = ''; }
+function showForgot(){ _hideAllAuth(); document.getElementById('auth-forgot').style.display = ''; }
+function showOTP()   { _hideAllAuth(); document.getElementById('auth-otp').style.display = ''; }
+
+function togglePw(id, btn) {
+  const el = document.getElementById(id);
+  const vis = el.type === 'password';
+  el.type = vis ? 'text' : 'password';
+  btn.textContent = vis ? '🙈' : '👁';
+}
+function checkPwStrength(inputId, barId) {
+  const pw = document.getElementById(inputId).value;
+  const fill = document.getElementById(barId);
+  let score = 0;
+  if (pw.length >= 6) score++; if (pw.length >= 10) score++;
+  if (/[A-Z]/.test(pw)) score++; if (/[0-9]/.test(pw)) score++; if (/[^A-Za-z0-9]/.test(pw)) score++;
+  fill.style.width = (score / 5 * 100) + '%';
+  fill.style.background = score <= 1 ? 'var(--red)' : score <= 3 ? 'var(--gold)' : 'var(--green)';
+}
+function otpMove(cur, nextId) { if (cur.value && nextId) document.getElementById(nextId).focus(); }
+function otpBack(e, cur, prevId) { if (e.key === 'Backspace' && !cur.value && prevId) document.getElementById(prevId).focus(); }
+function getOTP() { return ['o1','o2','o3','o4','o5','o6'].map(id => document.getElementById(id).value).join(''); }
+function autoVerifyOTP() { if (getOTP().length === 6) verifyOTP(); }
+
+async function doLogin() {
+  const btn = document.getElementById('login-btn'), err = document.getElementById('login-err');
+  const email = document.getElementById('login-email').value.trim(), pw = document.getElementById('login-pw').value;
+  err.style.display = 'none';
+  if (!email || !pw) { showErr(err, 'Please fill in both fields'); return; }
+  setLoading(btn, true, 'Signing in…');
+  try {
+    const data = await api('POST', '/auth/login', { email, password: pw });
+    onAuth(data);
+  } catch (e) {
+    if (e.message.includes('verify')) {
+      showErr(err, e.message + ` <a onclick="resendOTPForEmail('${email}')" style="color:var(--gold);cursor:pointer;font-weight:600">Resend OTP</a>`);
+    } else showErr(err, e.message);
+  }
+  setLoading(btn, false, 'Sign in');
+}
+
+function showBypassButton(errEl, reason) {
+  errEl.innerHTML = `
+    <div style="margin-bottom:8px;font-weight:600">${reason}</div>
+    <button onclick="directRegister()" style="background:linear-gradient(135deg,var(--orange),var(--orange2));color:#fff;border:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-b);width:100%;margin-top:2px">
+      ✓ Sign up without email verification →
+    </button>
+    <div style="font-size:11px;color:var(--text3);margin-top:8px">Fix: add <code>RESEND_API_KEY</code> in Render env vars — free at <a href="https://resend.com" target="_blank" style="color:var(--gold)">resend.com</a></div>`;
+  errEl.style.display = 'block';
+}
+
+async function sendOTP() {
+  const btn = document.getElementById('reg-btn'), err = document.getElementById('reg-err');
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pw = document.getElementById('reg-pw').value;
+  const cuisines = Array.from(document.querySelectorAll('#reg-cuisines .chip.on')).map(c => c.textContent);
+  const budget = +document.getElementById('reg-budget').value;
+  const spice = +document.getElementById('reg-spice').value;
+  err.style.display = 'none';
+  if (!name || !email || !pw) { showErr(err, 'Please fill all required fields'); return; }
+  if (pw.length < 6) { showErr(err, 'Password must be at least 6 characters'); return; }
+
+  S.regData = { name, email, password: pw, preferredCuisines: cuisines, budgetPreference: budget, spicePreference: spice };
+
+  // Show countdown so user knows it's working, not frozen
+  let secs = 12;
+  btn.disabled = true;
+  const countdownInterval = setInterval(() => {
+    secs--;
+    btn.innerHTML = `<span class="spinner"></span> Sending OTP… (${secs}s)`;
+    if (secs <= 0) clearInterval(countdownInterval);
+  }, 1000);
+  btn.innerHTML = `<span class="spinner"></span> Sending OTP… (${secs}s)`;
+
+  try {
+    const resp = await api('POST', '/auth/send-otp', S.regData);
+    clearInterval(countdownInterval);
+    document.querySelector('#otp-sub strong').textContent = email;
+    showOTP();
+    toast('OTP sent to ' + email + '. Check spam folder too.', 'ok');
+  } catch (e) {
+    clearInterval(countdownInterval);
+    const msg = e.message || '';
+    const isConfigErr = msg.includes('not configured') || msg.includes('EMAIL_USER') || msg.includes('EMAIL_PASS') || msg.includes('not_configured');
+    const isAuthErr   = msg.includes('App Password') || msg.includes('authentication') || msg.includes('auth_failed') || msg.includes('535') || msg.includes('Invalid login');
+    const isTimeout   = msg.includes('timeout') || msg.includes('timed out');
+    const isConnect   = msg.includes('ECONNREFUSED') || msg.includes('connect') || msg.includes('connection');
+
+    if (isConfigErr) {
+      showBypassButton(err, 'Email service not configured on server.');
+    } else if (isAuthErr) {
+      showBypassButton(err, 'Gmail authentication failed — App Password needed.');
+    } else if (isTimeout || isConnect) {
+      showBypassButton(err, 'Email server unreachable. SMTP may not be set up.');
+    } else {
+      // Unknown error — still offer bypass
+      err.innerHTML = `<div style="margin-bottom:8px">${msg}</div>
+        <button onclick="directRegister()" style="background:linear-gradient(135deg,var(--orange),var(--orange2));color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-b);width:100%;margin-top:4px">
+          Sign up without email verification →
+        </button>`;
+      err.style.display = 'block';
+    }
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = 'Send verification code →';
+}
+
+// Direct register without OTP — fallback when SMTP is broken/unconfigured
+async function directRegister() {
+  const err = document.getElementById('reg-err');
+  if (!S.regData) return;
+  err.style.display = 'none';
+  const btn = document.getElementById('reg-btn');
+  setLoading(btn, true, 'Creating account…');
+  try {
+    const data = await api('POST', '/auth/register', S.regData);
+    onAuth(data);
+    toast('Account created! Welcome to Food Spot AI 🎉', 'ok');
+  } catch (e) {
+    showErr(err, e.message);
+    btn.disabled = false;
+    btn.innerHTML = 'Send verification code →';
+  }
+}
+
+async function verifyOTP() {
+  const btn = document.getElementById('otp-btn'), err = document.getElementById('otp-err');
+  const otp = getOTP();
+  if (otp.length !== 6) { showErr(err, 'Please enter the complete 6-digit code'); return; }
+  err.style.display = 'none';
+  setLoading(btn, true, 'Verifying…');
+  try {
+    const data = await api('POST', '/auth/verify-otp', { email: S.regData?.email || document.getElementById('reg-email').value.trim(), otp });
+    onAuth(data);
+    toast('Email verified! Welcome to Food Spot AI 🎉', 'ok');
+  } catch (e) { showErr(err, e.message); }
+  setLoading(btn, false, 'Verify & create account');
+}
+
+async function resendOTP() {
+  if (!S.regData) { toast('Please fill in registration details first', 'err'); showReg(); return; }
+  try {
+    await api('POST', '/auth/send-otp', S.regData);
+    toast('New OTP sent to ' + S.regData.email + '. Also check spam folder.', 'ok');
+    ['o1','o2','o3','o4','o5','o6'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('o1').focus();
+  } catch (e) { toast(e.message, 'err'); }
+}
+async function resendOTPForEmail(email) {
+  if (S.regData && S.regData.email === email) {
+    try { await api('POST', '/auth/send-otp', S.regData); toast('OTP sent to ' + email, 'ok'); }
+    catch (e) { toast(e.message, 'err'); }
+    return;
+  }
+  toast('Please go to sign up and enter your details again before resending OTP', 'err');
+  showReg(); document.getElementById('reg-email').value = email || '';
+}
+
+async function doForgot() {
+  const btn = document.getElementById('forgot-btn'), err = document.getElementById('forgot-err');
+  const email = document.getElementById('forgot-email').value.trim();
+  err.style.display = 'none';
+  if (!email) { showErr(err, 'Please enter your email'); return; }
+  setLoading(btn, true, 'Sending…');
+  try {
+    const data = await api('POST', '/auth/forgot-password', { email });
+    err.style.display = 'block';
+    err.style.background = 'rgba(45,122,79,.07)';
+    err.style.borderColor = 'rgba(45,122,79,.2)';
+    err.style.color = 'var(--green)';
+    err.textContent = data.message;
+  } catch (e) { showErr(err, e.message); }
+  setLoading(btn, false, 'Send reset link');
+}
+
+function onAuth(data) {
+  S.token = data.token; S.user = data.user;
+  localStorage.setItem('fsai_token', S.token);
+  localStorage.setItem('fsai_user', JSON.stringify(S.user));
+  updateNav();
+  toast('Welcome, ' + S.user.name + '! 🎉', 'ok');
+  goPage(S.afterAuth || 'personal');
+  S.afterAuth = null;
+  checkPending();
+}
+function logout() {
+  S.token = null; S.user = null;
+  localStorage.removeItem('fsai_token'); localStorage.removeItem('fsai_user');
+  updateNav(); goPage('home'); toast('Signed out');
+}
+
+// ═══════════════════════════════════════════
+// RESTAURANTS CACHE
+// ═══════════════════════════════════════════
+async function loadAllRests() {
+  try { const d = await api('GET', '/restaurants/all'); S.allRests = d.restaurants; } catch (_) {}
+}
+
+// ═══════════════════════════════════════════
+// SEARCH HELPERS
+// ═══════════════════════════════════════════
+function matches(r, q) {
+  if (!q) return true;
+  const hay = [r.name, r.address, ...(r.cuisines || []), ...(r.tags || []),
+    ...(r.menu || []).flatMap(sec => (sec.items || []).map(i => i.name + ' ' + i.description))
+  ].join(' ').toLowerCase();
+  return hay.includes(q);
+}
+function getSearch(id) {
+  const el = document.getElementById('search-' + id);
+  const v = el ? el.value.trim().toLowerCase() : '';
+  const sc = document.getElementById('sc-' + id);
+  if (sc) sc.style.display = v ? 'block' : 'none';
+  return v;
+}
+function clearSearch(id) {
+  const el = document.getElementById('search-' + id);
+  if (el) el.value = '';
+  const sc = document.getElementById('sc-' + id);
+  if (sc) sc.style.display = 'none';
+  if (id === 'personal') filterPersonal();
+  else renderGroupRecs();
+}
+
+// ═══════════════════════════════════════════
+// MAP VIEW
+// ═══════════════════════════════════════════
+function openMapView(mode) {
+  let list = [];
+  if (mode === 'personal') list = S.personalFiltered || [];
+  if (mode === 'group') list = S.groupFiltered || [];
+  if (!list.length) { toast('No restaurants to show on map', 'err'); return; }
+  const ids = list.map(r => r._id || r.id).filter(Boolean).join(',');
+  const title = mode === 'personal' ? 'For You' : 'Group Recommendations';
+  window.location.href = `map.html?ids=${encodeURIComponent(ids)}&title=${encodeURIComponent(title)}`;
+}
+
+// ═══════════════════════════════════════════
+// RESTAURANT CARD — sorted by feedback score
+// ═══════════════════════════════════════════
+function rcard(r, pct, from) {
+  const id = r._id || r.id;
+  const tags = (r.tags || []).map(t =>
+    `<span class="tag t-${t==='veg'?'veg':t==='nonveg'?'nonveg':'budget'}">${t}</span>`
+  ).join('') + (r.cuisines || []).map(c => `<span class="tag t-cuisine">${c}</span>`).join('');
+  const feedbackBadge = r.avgFeedbackRating ? `<span style="font-size:10px;background:var(--gold-light);color:var(--gold);padding:2px 7px;border-radius:10px;font-weight:700;border:1px solid var(--gold3)">★ ${r.avgFeedbackRating} user</span>` : '';
+  return `<div class="rcard" onclick="openRest('${id}','${from}')">
+    <div class="rcard-img">${r.emoji || '🍽️'}</div>
+    <div class="rcard-body">
+      <div class="rcard-top"><div class="rcard-name">${r.name}</div><div><div class="mp">${pct}%</div><div class="ml">AI match</div></div></div>
+      <div class="rcard-meta">${r.address || ''}</div>
+      <div class="rcard-tags">${tags}${feedbackBadge ? ' ' + feedbackBadge : ''}</div>
+      <div class="mbar"><div class="mbar-fill" style="width:${pct}%"></div></div>
+      <div class="rcard-foot"><span>★ ${r.rating}</span><span style="font-size:11px;color:var(--text3)">${'🌶'.repeat(r.spiceLevel)}</span><span style="color:var(--gold);font-size:12px;font-weight:700">${'₹'.repeat(r.priceLevel)}</span></div>
+    </div></div>`;
+}
+
+// ═══════════════════════════════════════════
+// PERSONAL PAGE — AI-driven, sorted by feedback then match
+// ═══════════════════════════════════════════
+function initPersonalPage() {
+  if (!S.user) return;
+  S.selCuisines = [...(S.user.preferredCuisines || [])];
+  S.budget = S.user.budgetPreference || 2;
+  S.spice = S.user.spicePreference || 3;
+  document.getElementById('budget-sl').value = S.budget;
+  document.getElementById('bv').textContent = ['₹','₹₹','₹₹₹'][S.budget - 1];
+  document.getElementById('spice-sl').value = S.spice;
+  document.getElementById('sv').textContent = S.spice;
+  document.getElementById('personal-sub').textContent = `Hi ${S.user.name.split(' ')[0]}! Recommendations powered by your feedback history.`;
+  document.getElementById('cuisine-chips').innerHTML = ALL_CUISINES.map(c =>
+    `<button class="chip ${S.selCuisines.includes(c) ? 'on' : ''}" onclick="toggleC('${c}',this)">${c}</button>`
+  ).join('');
+  fetchPersonal();
+}
+function toggleC(c, el) {
+  const i = S.selCuisines.indexOf(c);
+  if (i >= 0) S.selCuisines.splice(i, 1); else S.selCuisines.push(c);
+  el.classList.toggle('on');
+}
+function setSub(m) {
+  S.submode = m;
+  ['regular','new','surprise'].forEach(x => document.getElementById('sub-' + x).classList.toggle('on', x === m));
+}
+async function fetchPersonal() {
+  const grid = document.getElementById('personal-grid'), btn = document.getElementById('get-recs-btn');
+  grid.innerHTML = loadingHTML(); setLoading(btn, true, 'AI thinking…');
+  try {
+    const data = await api('POST', '/recommend/personal', { cuisines: S.selCuisines, budget: S.budget, spice: S.spice, submode: S.submode });
+    S.currentSession = data.session;
+    // Sort: first by user feedback (liked) then by matchScore
+    let restaurants = data.restaurants || [];
+    const likedIds = (S.user?.likedRestaurants || []).map(r => String(r._id || r));
+    restaurants.sort((a, b) => {
+      const aLiked = likedIds.includes(String(a._id)) ? 1 : 0;
+      const bLiked = likedIds.includes(String(b._id)) ? 1 : 0;
+      if (bLiked !== aLiked) return bLiked - aLiked;
+      return (b.matchScore || 0) - (a.matchScore || 0);
+    });
+    S.personalRests = restaurants;
+    filterPersonal();
+  } catch (e) { grid.innerHTML = emptyHTML('⚠️', 'Could not load recommendations', e.message); }
+  setLoading(btn, false, 'Get AI Recommendations');
+}
+function filterPersonal() {
+  const q = getSearch('personal');
+  const grid = document.getElementById('personal-grid');
+  if (!S.personalRests.length) { S.personalFiltered = []; grid.innerHTML = emptyHTML('🍽️', 'No restaurants found', 'Adjust filters and try again'); return; }
+  if (S.submode === 'surprise' && S.personalRests.length === 1) {
+    const r = S.personalRests[0]; S.personalFiltered = [r];
+    grid.innerHTML = `<div class="surprise-c"><div class="spin-icon">${r.emoji||'🍽️'}</div>
+      <div style="font-family:var(--font-h);font-size:22px;font-weight:700;margin:1rem 0 .4rem;color:var(--text)">${r.name}</div>
+      <div style="color:var(--text3);font-size:13px;margin-bottom:1.3rem">${r.address||''}</div>
+      <div style="display:flex;gap:9px;justify-content:center">
+        <button class="btn btn-p" onclick="openRest('${r._id||r.id}','personal')">View restaurant →</button>
+        <button class="btn btn-g" onclick="fetchPersonal()">Roll again 🎲</button>
+      </div></div>`;
+    return;
+  }
+  const list = S.personalRests.filter(r => matches(r, q));
+  S.personalFiltered = list;
+  grid.innerHTML = list.length
+    ? `<div class="rgrid">${list.map(r => rcard(r, r.matchScore || Math.round(r.rating * 20), 'personal')).join('')}</div>`
+    : emptyHTML('🍽️', 'No results', 'Clear search or adjust filters');
+}
+
+// ═══════════════════════════════════════════
+// NEARBY MAP (embedded Leaflet)
+// ═══════════════════════════════════════════
+function initNearby() {
+  if (!S.nearbyMap) {
+    S.nearbyMap = L.map('nearby-map', { zoomControl: true }).setView([16.5062, 80.6480], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 19 }).addTo(S.nearbyMap);
+  }
+  loadNearbyRests(16.5062, 80.6480);
+}
+function locateAndLoad() {
+  const btn = document.getElementById('map-locate-btn');
+  if (btn) { btn.innerHTML = '<span class="spinner"></span> Locating…'; btn.disabled = true; }
+  if (!navigator.geolocation) { loadNearbyRests(16.5062, 80.6480); return; }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat = pos.coords.latitude, lng = pos.coords.longitude;
+      S.userLatLng = [lat, lng];
+      S.nearbyMap.setView([lat, lng], 14);
+      if (S.userMarker) S.userMarker.remove();
+      S.userMarker = L.marker([lat, lng], { icon: L.divIcon({ className: '', html: '<div class="user-marker"></div>', iconSize: [14, 14], iconAnchor: [7, 7] }) }).addTo(S.nearbyMap);
+      S.userMarker.bindTooltip('You are here', { permanent: false, direction: 'top' });
+      if (S.radiusCircle) S.radiusCircle.remove();
+      S.radiusCircle = L.circle([lat, lng], { radius: 3000, color: 'rgba(201,146,26,.4)', weight: 1.5, dashArray: '5,4', fill: true, fillColor: 'rgba(201,146,26,.04)', fillOpacity: 1, interactive: false }).addTo(S.nearbyMap);
+      loadNearbyRests(lat, lng);
+      if (btn) { btn.innerHTML = '📍 Located'; btn.disabled = false; }
+    },
+    () => { loadNearbyRests(16.5062, 80.6480); if (btn) { btn.innerHTML = '📍 Locate Me'; btn.disabled = false; } },
+    { timeout: 7000, enableHighAccuracy: true }
+  );
+}
+function haversineJS(lat1, lng1, lat2, lng2) {
+  const R = 6371, dLat = (lat2 - lat1) * Math.PI / 180, dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+async function loadNearbyRests(lat, lng) {
+  const list = document.getElementById('nearby-list');
+  list.innerHTML = loadingHTML();
+  try {
+    const d = await api('GET', `/location/nearby?lat=${lat}&lng=${lng}&radius=10`);
+    placeRestaurantMarkersWithDistance(d.restaurants, lat, lng);
+    renderNearbyList(d.restaurants);
+  } catch (e) {
+    const rests = S.allRests.length ? S.allRests : [];
+    const withDist = rests.map(r => ({ ...r, distanceKm: r.lat && r.lng ? +haversineJS(lat, lng, r.lat, r.lng).toFixed(2) : null })).sort((a, b) => (a.distanceKm ?? 999) - (b.distanceKm ?? 999));
+    placeRestaurantMarkersWithDistance(withDist, lat, lng);
+    renderNearbyList(withDist);
+  }
+}
+function placeRestaurantMarkersWithDistance(rests, userLat, userLng) {
+  Object.values(S.mapMarkers).forEach(m => m.remove());
+  S.mapMarkers = {};
+  rests.forEach(r => {
+    if (!r.lat || !r.lng) return;
+    const km = r.distanceKm;
+    const color = km == null ? '#9c9188' : km < 2 ? '#2d7a4f' : km < 5 ? '#c9921a' : '#e05e1a';
+    const icon = L.divIcon({ className: '', html: `<div style="width:36px;height:36px;border-radius:50%;background:#fff;border:2.5px solid ${color};display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 2px 12px rgba(0,0,0,.2);cursor:pointer">${r.emoji || '🍽️'}</div>`, iconSize: [36, 36], iconAnchor: [18, 18], popupAnchor: [0, -20] });
+    const m = L.marker([r.lat, r.lng], { icon }).addTo(S.nearbyMap);
+    const distStr = r.distanceLabel || (km != null ? (km < 1 ? Math.round(km * 1000) + ' m away' : km.toFixed(1) + ' km away') : '');
+    m.bindPopup(`<div class="pu-name">${r.emoji || '🍽️'} ${r.name}</div><div class="pu-meta">${r.address || ''}</div>${distStr ? `<div class="pu-dist">📍 ${distStr}</div>` : ''}<div class="pu-meta">⭐ ${r.rating} · ${'₹'.repeat(r.priceLevel)} · ${(r.cuisines || []).slice(0, 2).join(', ')}</div><button class="pu-btn" onclick="openRest('${r._id}','nearby')">View restaurant →</button>`, { maxWidth: 220 });
+    m.on('click', () => highlightNearbyCard(r._id));
+    S.mapMarkers[r._id] = m;
+  });
+}
+function highlightNearbyCard(id) {
+  document.querySelectorAll('.nearby-rcard').forEach(c => c.classList.remove('active'));
+  const c = document.getElementById('nrc-' + id);
+  if (c) { c.classList.add('active'); c.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+}
+function renderNearbyList(rests) {
+  const list = document.getElementById('nearby-list');
+  if (!rests.length) { list.innerHTML = emptyHTML('📍', 'No restaurants found nearby', 'Try expanding the radius'); return; }
+  list.innerHTML = `<div style="margin-bottom:.8rem;font-size:12px;color:var(--text3)">${rests.length} restaurants found</div><div class="rgrid">${rests.map(r => {
+    const id = r._id; const pct = r.matchScore ?? Math.round(r.rating * 20);
+    const dist = r.distanceLabel || (r.distanceKm != null ? (r.distanceKm < 1 ? Math.round(r.distanceKm * 1000) + ' m' : r.distanceKm.toFixed(1) + ' km') : '');
+    const tags = (r.tags || []).map(t => `<span class="tag t-${t==='veg'?'veg':t==='nonveg'?'nonveg':'budget'}">${t}</span>`).join('') + (r.cuisines || []).map(c => `<span class="tag t-cuisine">${c}</span>`).join('');
+    return `<div class="rcard nearby-rcard" id="nrc-${id}" onclick="onNearbyCardClick('${id}',${r.lat||0},${r.lng||0})">
+      <div class="rcard-img">${r.emoji || '🍽️'}</div>
+      <div class="rcard-body">
+        <div class="rcard-top"><div class="rcard-name">${r.name}</div><div>${dist ? `<div style="font-size:12px;font-weight:700;color:var(--green)">📍 ${dist}</div>` : ''}</div></div>
+        <div class="rcard-meta">${r.address || ''}</div>
+        <div class="rcard-tags">${tags}</div>
+        <div class="mbar"><div class="mbar-fill" style="width:${pct}%"></div></div>
+        <div class="rcard-foot"><span>★ ${r.rating}</span><span>${'₹'.repeat(r.priceLevel)}</span><span>Match ${pct}%</span></div>
+      </div></div>`;
+  }).join('')}</div>`;
+}
+function onNearbyCardClick(id, lat, lng) {
+  highlightNearbyCard(id);
+  if (S.nearbyMap && lat && lng) {
+    S.nearbyMap.setView([lat, lng], 16, { animate: true });
+    const m = S.mapMarkers[id];
+    if (m) setTimeout(() => m.openPopup(), 350);
+  }
+}
+
+// ═══════════════════════════════════════════
+// GROUP ROOM — AI-powered group recommendations
+// ═══════════════════════════════════════════
+function renderGroupLobby() {
+  document.getElementById('group-lobby-area').innerHTML = `
+    <div class="lobby-wrap">
+      <div class="lobby-title">Group Dining 🤝</div>
+      <div class="lobby-sub">One person creates a room and shares the 6-letter code.<br>Everyone joins — AI finds the best match for the whole group.</div>
+      <div class="lobby-opts">
+        <div class="lopt feat" onclick="showCreate()"><span class="lopt-tag">Host</span><span class="lopt-icon">🏠</span><div class="lopt-title">Create a Room</div><div class="lopt-desc">Generate a code and wait for your group</div></div>
+        <div class="lopt" onclick="showJoin()"><span class="lopt-icon">🔑</span><div class="lopt-title">Join a Room</div><div class="lopt-desc">Enter the code your friend shared</div></div>
+      </div>
+      <div style="text-align:center;font-size:12px;color:var(--text3)">Rooms auto-expire after 2 hours · Everyone needs a Food Spot AI account to join</div>
+    </div>`;
+}
+function showCreate() {
+  openModal(`<div class="modal-title">Create a room 🏠</div>
+    <div class="modal-sub">A 6-letter code will be generated. Share it with your group so they can join.</div>
+    <button class="btn btn-p btn-w" id="create-room-btn" onclick="doCreateRoom()">Generate Room Code →</button>`);
+}
+function showJoin() {
+  openModal(`<div class="modal-title">Join a room 🔑</div>
+    <div class="modal-sub">Enter the 6-letter code your friend shared with you.</div>
+    <input class="code-big" id="join-code" placeholder="ABCDEF" maxlength="6" oninput="this.value=this.value.toUpperCase()">
+    <div class="f-err" id="join-err"></div>
+    <button class="btn btn-p btn-w" id="join-room-btn" onclick="doJoinRoom()">Join Room →</button>`);
+}
+async function doCreateRoom() {
+  const btn = document.getElementById('create-room-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  try {
+    const data = await api('POST', '/group/create');
+    S.room = data.room; closeModal(); goPage('room'); await renderRoom();
+  } catch (e) { toast(e.message, 'err'); }
+  btn.disabled = false; btn.textContent = 'Generate Room Code →';
+}
+async function doJoinRoom() {
+  const btn = document.getElementById('join-room-btn'), err = document.getElementById('join-err');
+  const code = (document.getElementById('join-code').value || '').trim().toUpperCase();
+  err.style.display = 'none';
+  if (!code || code.length !== 6) { err.textContent = 'Enter a valid 6-letter code'; err.style.display = 'block'; return; }
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  try {
+    const data = await api('POST', '/group/join', { code });
+    S.room = data.room; closeModal(); goPage('room'); await renderRoom();
+  } catch (e) { err.textContent = e.message; err.style.display = 'block'; }
+  btn.disabled = false; btn.textContent = 'Join Room →';
+}
+async function renderRoom() {
+  const room = S.room; if (!room) return;
+  const isHost = String(room.host) === String(S.user?._id);
+  document.getElementById('room-pg-title').textContent = 'Room ' + room.code;
+  document.getElementById('room-pg-sub').textContent = room.members.length + ' member' + (room.members.length !== 1 ? 's' : '') + ' · ' + (isHost ? 'You are the host' : 'You joined as a member');
+  document.getElementById('room-status-txt').textContent = room.members.length > 1 ? room.members.length + ' members in room' : 'Waiting for members…';
+  const allC = [...new Set(room.members.flatMap(m => m.preferredCuisines || []))];
+  const avgB = Math.round(room.members.reduce((s, m) => s + (m.budgetPreference || 2), 0) / room.members.length);
+  const avgS = Math.round(room.members.reduce((s, m) => s + (m.spicePreference || 3), 0) / room.members.length);
+  const membersHTML = room.members.map((m, i) => `
+    <div class="mrow">
+      <div class="m-left">
+        <div class="m-av" style="background:${COLORS[i%COLORS.length]}22;color:${COLORS[i%COLORS.length]}">${(m.name||'?').slice(0,2).toUpperCase()}</div>
+        <div>
+          <div class="m-name">${m.name||'Member'}${String(m.userId) === String(S.user?._id) ? ' <span style="font-size:10px;color:var(--text3)">(you)</span>' : ''}</div>
+          <div class="pref-mini">${(m.preferredCuisines||[]).slice(0,3).map(c=>`<span class="tag t-cuisine">${c}</span>`).join('')}<span class="tag t-budget">${'₹'.repeat(m.budgetPreference||2)}</span><span class="tag t-spicy">🌶${m.spicePreference||3}</span></div>
+        </div>
+      </div>
+      ${isHost && String(m.userId) !== String(S.user?._id) ? `<button class="m-kick" onclick="kickMember('${room.code}','${m.userId}')">×</button>` : ''}
+    </div>`).join('');
+
+  let recsHTML = '';
+  if (room.members.length >= 2) {
+    try {
+      const data = await api('POST', '/group/recommend', { code: room.code });
+      S.groupRests = data.restaurants;
+      recsHTML = renderGroupRecsHTML(S.groupRests, '');
+    } catch (e) { recsHTML = emptyHTML('⚠️', 'Could not load recommendations', e.message); }
+  } else {
+    S.groupFiltered = [];
+    recsHTML = emptyHTML('👥', 'Need at least 2 members', 'Share the room code with friends');
+  }
+
+  document.getElementById('room-content').innerHTML = `
+    <div class="room-grid">
+      <div>
+        <div class="room-panel">
+          <div class="code-display">
+            <div class="cd-label">Room Code</div>
+            <div class="cd-val">${room.code}</div>
+            <div class="cd-note">Share this with your friends</div>
+            <button class="copy-btn" id="copy-btn" onclick="copyCode('${room.code}')">📋 Copy code</button>
+          </div>
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.6rem;font-weight:700">Members (${room.members.length})</div>
+          ${membersHTML}
+          ${isHost ? `<div style="margin-top:.95rem;padding-top:.95rem;border-top:1.5px solid var(--border)"><div style="font-size:11px;color:var(--text3);margin-bottom:8px">Members join by entering the room code in their own account.</div><button class="btn btn-g btn-s btn-w" onclick="refreshRoom()">🔄 Refresh members</button></div>` : ''}
+        </div>
+      </div>
+      <div>
+        <div class="gbanner">
+          <span class="gb-icon">🤖</span>
+          <div><div class="gb-title">AI combined preferences</div><div class="gb-sub">Cuisines: ${allC.slice(0,4).join(', ')}${allC.length>4?' +more':''} · Budget: ${'₹'.repeat(avgB)} · Spice: ${avgS}/5</div></div>
+          <div class="gb-av-row">${room.members.map((m,i)=>`<div class="gb-av" style="background:${COLORS[i%COLORS.length]}22;color:${COLORS[i%COLORS.length]}">${(m.name||'?').slice(0,2).toUpperCase()}</div>`).join('')}</div>
+        </div>
+        <div class="results-head">
+          <div class="left">
+            <div class="search-wrap" style="margin-bottom:0">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input class="search-input" id="search-group-search" placeholder="Search group restaurants…" oninput="renderGroupRecs()">
+              <button class="search-clear" id="sc-group-search" onclick="clearSearch('group-search')">×</button>
+            </div>
+          </div>
+          <button class="map-btn" onclick="openMapView('group')">📍 View Map</button>
+        </div>
+        <div id="group-recs">${recsHTML}</div>
+      </div>
+    </div>`;
+}
+function renderGroupRecsHTML(list, q) {
+  const filtered = list.filter(r => matches(r, q));
+  S.groupFiltered = filtered;
+  if (!filtered.length) return emptyHTML('🍽️', 'No results', 'Try a different search');
+  return `<div class="rgrid">${filtered.map(r => rcard(r, r.matchScore || Math.round(r.rating*20), 'room')).join('')}</div>`;
+}
+function renderGroupRecs() {
+  const q = getSearch('group-search');
+  const el = document.getElementById('group-recs');
+  if (!el) return;
+  el.innerHTML = renderGroupRecsHTML(S.groupRests || [], q);
+}
+async function kickMember(code, userId) {
+  try { const data = await api('POST', `/group/${code}/kick`, { userId }); S.room = data.room; await renderRoom(); }
+  catch (e) { toast(e.message, 'err'); }
+}
+async function refreshRoom() {
+  try { const data = await api('GET', `/group/${S.room.code}`); S.room = data.room; await renderRoom(); toast('Members refreshed', 'ok'); }
+  catch (e) { toast(e.message, 'err'); }
+}
+function copyCode(code) {
+  navigator.clipboard.writeText(code).catch(() => {});
+  const btn = document.getElementById('copy-btn');
+  if (btn) { btn.textContent = '✓ Copied!'; btn.classList.add('done'); setTimeout(() => { btn.textContent = '📋 Copy code'; btn.classList.remove('done'); }, 2000); }
+  toast('Code copied!', 'ok');
+}
+
+// ═══════════════════════════════════════════
+// RESTAURANT DETAIL
+// ═══════════════════════════════════════════
+async function openRest(id, from) {
+  S.restFrom = from;
+  const backLabel = from === 'room' ? 'Group Room' : from === 'nearby' ? 'Nearby' : 'Recommendations';
+  const backPage = from === 'room' ? 'room' : from === 'nearby' ? 'nearby' : 'personal';
+  document.getElementById('rest-bc').textContent = '← ' + backLabel;
+  document.getElementById('rest-bc').onclick = () => goPage(backPage);
+  document.getElementById('rd-back-btn').onclick = () => goPage(backPage);
+  document.getElementById('rd-go-btn').onclick = () => selectRest(id);
+  let r = [...S.allRests, ...S.personalRests, ...(S.groupRests || [])].find(x => String(x._id || x.id) === String(id));
+  if (!r) {
+    try { const d = await api('GET', '/restaurants/' + id); r = d.restaurant; }
+    catch (e) { toast('Could not load restaurant', 'err'); return; }
+  }
+  S.currentRestId = id;
+  const pct = r.matchScore || Math.round(r.rating * 20);
+  document.getElementById('rd-name').textContent = r.name;
+  document.getElementById('rd-addr').textContent = '📍 ' + (r.address || '');
+  document.getElementById('rd-match').textContent = pct + '%';
+  document.getElementById('rd-badges').innerHTML = [
+    `<span class="info-pill">⭐ ${r.rating}</span>`,
+    `<span class="info-pill">${'₹'.repeat(r.priceLevel)}</span>`,
+    `<span class="info-pill">🌶 ${r.spiceLevel}/5</span>`,
+    ...(r.cuisines || []).map(c => `<span class="info-pill">${c}</span>`)
+  ].join('');
+  document.getElementById('rd-tags').innerHTML = (r.tags || []).map(t =>
+    `<span class="tag t-${t==='veg'?'veg':t==='nonveg'?'nonveg':'budget'}" style="margin-right:4px">${t}</span>`
+  ).join('');
+  document.getElementById('rd-menu').innerHTML = (r.menu || []).map(sec => `
+    <div class="menu-sec">
+      <div class="menu-sec-t">${sec.category}</div>
+      ${(sec.items || []).map(i => `<div class="mi"><div class="mi-l"><div class="mi-name">${i.name}</div><div class="mi-desc">${i.description}</div></div><div class="mi-price">₹${i.price}</div></div>`).join('')}
+    </div>`).join('');
+  document.getElementById('rd-stats').innerHTML = [
+    ['Cuisine', (r.cuisines || []).join(', ')], ['Price', '₹'.repeat(r.priceLevel)],
+    ['Spice', r.spiceLevel + '/5'], ['Rating', r.rating + ' ⭐'],
+    ['Type', r.tags?.includes('veg') && r.tags?.includes('nonveg') ? 'Veg & Non-veg' : r.tags?.includes('veg') ? 'Vegetarian' : 'Non-vegetarian']
+  ].map(([l, v]) => `<div class="stat-row"><span class="stat-l">${l}</span><span style="font-weight:600">${v}</span></div>`).join('');
+  const sim = S.allRests.filter(x => String(x._id || x.id) !== String(id) && (x.cuisines || []).some(c => (r.cuisines || []).includes(c))).slice(0, 2);
+  document.getElementById('rd-similar').innerHTML = sim.length
+    ? sim.map(s => `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1.5px solid var(--border);cursor:pointer;transition:color .15s" onclick="openRest('${s._id||s.id}','${from}')" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color=''"><div><div style="font-size:13px;font-weight:600">${s.emoji} ${s.name}</div><div style="font-size:11px;color:var(--text3)">${(s.cuisines||[]).join(', ')}</div></div><span style="color:var(--gold)">→</span></div>`).join('')
+    : '<div style="font-size:12px;color:var(--text3)">None found</div>';
+  goPage('restaurant');
+}
+async function selectRest(id) {
+  if (!S.user) { toast('Please log in first', 'err'); return; }
+  if (!S.currentSession) { toast('Please get recommendations first (For You page)', 'err'); return; }
+  try {
+    await api('POST', '/recommend/select', { sessionId: S.currentSession._id, restaurantId: id });
+    const r = [...S.allRests, ...S.personalRests].find(x => String(x._id || x.id) === String(id));
+    toast('Logged "' + (r?.name || 'restaurant') + '" — rate it after your visit! 🍽️', 'ok');
+    checkPending(); setTimeout(() => goPage('home'), 1000);
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+// ═══════════════════════════════════════════
+// FEEDBACK — dropdown food item selection
+// ═══════════════════════════════════════════
+async function checkPending() {
+  if (!S.user) return;
+  try {
+    const d = await api('GET', '/recommend/pending-feedback');
+    S.pendingFeedback = d.sessions;
+    const dot = document.getElementById('pending-dot');
+    if (dot) dot.style.display = d.sessions.length ? 'inline' : 'none';
+  } catch (_) {}
+}
+
+async function fetchFeedback() {
+  const list = document.getElementById('feedback-list');
+  list.innerHTML = loadingHTML();
+  try {
+    const d = await api('GET', '/recommend/pending-feedback');
+    if (!d.sessions.length) { list.innerHTML = emptyHTML('✅', 'All caught up!', 'No pending feedback. Go explore some restaurants!'); return; }
+    window._fbState = {};
+    list.innerHTML = d.sessions.map(sess => {
+      const r = sess.selectedRestaurant;
+      window._fbState[sess._id] = { rating: 0, liked: null, itemFeedbacks: {} };
+      const restData = [...S.allRests, ...S.personalRests].find(x => String(x._id) === String(r?._id));
+      const allItems = restData ? (restData.menu || []).flatMap(sec => sec.items.map(i => ({ ...i, category: sec.category }))) : [];
+      const itemOptionsHTML = allItems.map(item => `<option value="${encodeURIComponent(item.name)}|${encodeURIComponent(item.category)}|${item.price}">${item.name} — ${item.category} (₹${item.price})</option>`).join('');
+
+      return `<div class="fb-card" id="fbc-${sess._id}">
+        <div style="font-size:18px;font-weight:700;font-family:var(--font-h);margin-bottom:3px;color:var(--text)">${r?.emoji||'🍽️'} ${r?.name||'Restaurant'}</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:1.15rem">📍 ${r?.address||''} · Rate your experience</div>
+
+        <div class="sec-label">Restaurant rating</div>
+        <div class="stars-row" id="stars-${sess._id}">
+          ${[1,2,3,4,5].map(n=>`<button class="star-b" onclick="setRating('${sess._id}',${n})">★</button>`).join('')}
+        </div>
+        <div class="sec-label">Overall impression</div>
+        <div class="like-row">
+          <button class="like-b" id="lbyes-${sess._id}" onclick="setLike('${sess._id}',true)">👍 Loved it</button>
+          <button class="like-b" id="lbno-${sess._id}" onclick="setLike('${sess._id}',false)">👎 Not great</button>
+        </div>
+        <div class="sec-label">Comment (optional)</div>
+        <textarea id="cmt-${sess._id}" placeholder="What did you enjoy? What could be better?"></textarea>
+
+        ${allItems.length ? `
+        <div class="fb-dropdown-wrap">
+          <div class="fb-dropdown-title">🍴 Rate specific dishes (optional)</div>
+          <div class="fb-select-wrap">
+            <select class="fb-select" id="item-select-${sess._id}" onchange="addItemFromDropdown('${sess._id}')">
+              <option value="">— Select a dish to rate —</option>
+              ${itemOptionsHTML}
+            </select>
+            <span class="fb-select-arrow">▼</span>
+          </div>
+          <div class="selected-items-container" id="selected-items-${sess._id}"></div>
+        </div>` : ''}
+
+        <div style="display:flex;gap:9px;margin-top:1.1rem">
+          <button class="btn btn-p btn-s" onclick="submitFeedback('${sess._id}','${r?._id}')">Submit feedback</button>
+          <button class="btn btn-g btn-s" onclick="document.getElementById('fbc-${sess._id}').style.display='none'">Skip</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) { list.innerHTML = emptyHTML('⚠️', 'Could not load feedback', e.message); }
+}
+
+function addItemFromDropdown(sid) {
+  const sel = document.getElementById('item-select-' + sid);
+  const val = sel.value;
+  if (!val) return;
+  const [encName, encCat, price] = val.split('|');
+  const itemName = decodeURIComponent(encName);
+  const category = decodeURIComponent(encCat);
+  const enc = encodeURIComponent(itemName);
+  sel.value = '';
+
+  if (window._fbState[sid].itemFeedbacks[itemName]) {
+    toast('This dish is already added', 'err'); return;
+  }
+  window._fbState[sid].itemFeedbacks[itemName] = { itemName, category, rating: 0, liked: null };
+
+  const container = document.getElementById('selected-items-' + sid);
+  const div = document.createElement('div');
+  div.className = 'item-fb-row';
+  div.id = 'ifbc-' + sid + '-' + enc;
+  div.innerHTML = `
+    <div class="item-fb-row-header">
+      <div><span class="item-fb-name">${itemName}</span><span class="item-fb-cat">${category}</span></div>
+      <button class="remove-item-btn" onclick="removeItemFb('${sid}','${itemName}')">×</button>
+    </div>
+    <div class="ifb-stars" id="ifb-stars-${sid}-${enc}">
+      ${[1,2,3,4,5].map(n=>`<button class="ifb-star" onclick="setItemRating('${sid}','${itemName}','${category}',${n},this.parentElement)">★</button>`).join('')}
+      <span style="font-size:10px;color:var(--text3);margin-left:7px;align-self:center" id="istar-label-${sid}-${enc}">Tap to rate</span>
+    </div>
+    <div class="ifb-like-row" id="ifb-like-${sid}-${enc}" style="display:none">
+      <button class="ifb-like" id="ifbl-yes-${sid}-${enc}" onclick="setItemLike('${sid}','${itemName}',true)">👍 Liked</button>
+      <button class="ifb-like" id="ifbl-no-${sid}-${enc}" onclick="setItemLike('${sid}','${itemName}',false)">👎 Didn't like</button>
+    </div>`;
+  container.appendChild(div);
+}
+
+function removeItemFb(sid, itemName) {
+  delete window._fbState[sid].itemFeedbacks[itemName];
+  const enc = encodeURIComponent(itemName);
+  const el = document.getElementById('ifbc-' + sid + '-' + enc);
+  if (el) el.remove();
+}
+
+function setRating(sid, n) {
+  window._fbState[sid].rating = n;
+  document.querySelectorAll(`#stars-${sid} .star-b`).forEach((b, i) => b.classList.toggle('lit', i < n));
+}
+function setLike(sid, v) {
+  window._fbState[sid].liked = v;
+  document.getElementById(`lbyes-${sid}`).className = 'like-b' + (v === true ? ' yes' : '');
+  document.getElementById(`lbno-${sid}`).className = 'like-b' + (v === false ? ' no' : '');
+}
+function setItemRating(sid, itemName, category, n, starsContainer) {
+  if (!window._fbState[sid].itemFeedbacks[itemName])
+    window._fbState[sid].itemFeedbacks[itemName] = { itemName, category, rating: 0, liked: null };
+  window._fbState[sid].itemFeedbacks[itemName].rating = n;
+  starsContainer.querySelectorAll('.ifb-star').forEach((s, i) => s.classList.toggle('lit', i < n));
+  const enc = encodeURIComponent(itemName);
+  const label = document.getElementById('istar-label-' + sid + '-' + enc);
+  if (label) label.textContent = ['','★','★★','★★★','★★★★','★★★★★'][n];
+  const likeRow = document.getElementById('ifb-like-' + sid + '-' + enc);
+  if (likeRow) likeRow.style.display = 'flex';
+}
+function setItemLike(sid, itemName, v) {
+  if (!window._fbState[sid].itemFeedbacks[itemName]) return;
+  window._fbState[sid].itemFeedbacks[itemName].liked = v;
+  const enc = encodeURIComponent(itemName);
+  document.getElementById(`ifbl-yes-${sid}-${enc}`).className = 'ifb-like' + (v === true ? ' yes' : '');
+  document.getElementById(`ifbl-no-${sid}-${enc}`).className = 'ifb-like' + (v === false ? ' no' : '');
+}
+async function submitFeedback(sid, rid) {
+  const st = (window._fbState || {})[sid] || {};
+  if (!st.rating) { toast('Please give the restaurant a star rating first', 'err'); return; }
+  const itemFeedbacks = Object.values(st.itemFeedbacks || {}).filter(x => x.rating > 0);
+  const comment = document.getElementById('cmt-' + sid)?.value || '';
+  try {
+    await api('POST', '/feedback/submit', { sessionId: sid, restaurantId: rid, rating: st.rating, liked: st.liked, comment, itemFeedbacks });
+    document.getElementById('fbc-' + sid).style.display = 'none';
+    const prof = await api('GET', '/auth/profile');
+    S.user = prof.user; localStorage.setItem('fsai_user', JSON.stringify(S.user));
+    toast('Feedback saved' + (itemFeedbacks.length ? ' (' + itemFeedbacks.length + ' dish rating' + (itemFeedbacks.length > 1 ? 's' : '') + ')' : '') + ' — AI updated! 🎉', 'ok');
+    checkPending();
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+// ═══════════════════════════════════════════
+// HISTORY — with expandable feedback detail
+// ═══════════════════════════════════════════
+async function fetchHistory() {
+  const list = document.getElementById('history-list');
+  list.innerHTML = loadingHTML();
+  try {
+    const data = await api('GET', '/recommend/history');
+    const sessions = data.sessions.filter(s => s.selectedRestaurant);
+    if (!sessions.length) { list.innerHTML = emptyHTML('📋', 'No visits yet', 'Use "I\'ll go here" on any restaurant to track visits'); return; }
+
+    // Also fetch user feedbacks for mapping
+    let feedbackMap = {};
+    try {
+      const fd = await api('GET', '/feedback/user');
+      (fd.feedbacks || []).forEach(fb => { feedbackMap[String(fb.sessionId)] = fb; });
+    } catch (_) {}
+
+    list.innerHTML = sessions.map(s => {
+      const r = s.selectedRestaurant;
+      const date = new Date(s.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      const fb = feedbackMap[String(s._id)];
+      return `<div class="hist-item" onclick="toggleHistoryDetail('${s._id}')">
+        <div style="flex:1">
+          <div class="hi-name">${r?.emoji||'🍽️'} ${r?.name||'Restaurant'}</div>
+          <div class="hi-meta">${r?.address||''} · ${date} · ${s.mode}</div>
+          ${s.feedbackGiven && fb ? `<div id="hd-${s._id}" class="hist-detail" style="display:none">
+            <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:.35rem">Your Review</div>
+            <div class="hd-stars">${[1,2,3,4,5].map(n=>`<span class="hd-star ${fb.rating>=n?'lit':''}">★</span>`).join('')}</div>
+            ${fb.liked !== null ? `<div style="font-size:12px;color:${fb.liked?'var(--green)':'var(--red)'};margin-bottom:.3rem">${fb.liked ? '👍 Loved it' : '👎 Not great'}</div>` : ''}
+            ${fb.comment ? `<div class="hd-comment">"${fb.comment}"</div>` : ''}
+            ${fb.itemFeedbacks?.length ? `<div class="hd-items">
+              <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.4rem">Dishes rated</div>
+              ${fb.itemFeedbacks.map(item => `<div class="hd-item-row">
+                <span style="font-weight:600">${item.itemName}</span>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span>${[1,2,3,4,5].map(n=>`<span style="color:${item.rating>=n?'var(--gold2)':'var(--bg4)'}">★</span>`).join('')}</span>
+                  ${item.liked !== null ? `<span style="font-size:10px;color:${item.liked?'var(--green)':'var(--red)'}">${item.liked?'👍':'👎'}</span>` : ''}
+                </div>
+              </div>`).join('')}
+            </div>` : ''}
+          </div>` : ''}
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          ${s.feedbackGiven ? '<span class="tag t-veg" style="font-size:10px">Reviewed ✓</span>' : '<span class="pend-chip">Pending</span>'}
+          ${!s.feedbackGiven ? `<div style="margin-top:7px"><button class="btn btn-s btn-g" onclick="event.stopPropagation();goPage('feedback')">Rate now</button></div>` : `<div style="margin-top:5px;font-size:10px;color:var(--text3)">tap to view</div>`}
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) { list.innerHTML = emptyHTML('⚠️', 'Could not load history', e.message); }
+}
+
+function toggleHistoryDetail(sid) {
+  const el = document.getElementById('hd-' + sid);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+// ═══════════════════════════════════════════
+// PROFILE
+// ═══════════════════════════════════════════
+function renderProfile() {
+  if (!S.user) return;
+  const u = S.user;
+  const ini = u.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+  document.getElementById('prof-av').textContent = ini;
+  document.getElementById('prof-name-d').textContent = u.name;
+  document.getElementById('prof-email-d').textContent = u.email;
+  document.getElementById('prof-title').textContent = u.name.split(' ')[0] + "'s Profile";
+  document.getElementById('prof-budget').value = u.budgetPreference || 2;
+  document.getElementById('prof-bv').textContent = ['₹','₹₹','₹₹₹'][(u.budgetPreference || 2) - 1];
+  document.getElementById('prof-spice').value = u.spicePreference || 3;
+  document.getElementById('prof-sv').textContent = u.spicePreference || 3;
+  document.getElementById('prof-cuisines').innerHTML = ALL_CUISINES.map(c =>
+    `<button class="chip ${(u.preferredCuisines||[]).includes(c) ? 'on' : ''}" onclick="this.classList.toggle('on')">${c}</button>`
+  ).join('');
+  const liked = u.likedRestaurants || [];
+  document.getElementById('liked-list').innerHTML = liked.length
+    ? liked.map(r => `<div style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1.5px solid var(--border)"><span style="font-size:20px">${r.emoji||'🍽️'}</span><div><div style="font-size:13px;font-weight:600">${r.name||'...'}</div><div style="font-size:11px;color:var(--text3)">${r.address||''}</div></div></div>`).join('')
+    : '<div style="font-size:13px;color:var(--text3)">No liked restaurants yet. Rate your visits to build this list!</div>';
+}
+async function savePreferences() {
+  const cuisines = Array.from(document.querySelectorAll('#prof-cuisines .chip.on')).map(c => c.textContent);
+  const budget = +document.getElementById('prof-budget').value;
+  const spice = +document.getElementById('prof-spice').value;
+  try {
+    const data = await api('PATCH', '/auth/preferences', { preferredCuisines: cuisines, budgetPreference: budget, spicePreference: spice });
+    S.user = data.user; localStorage.setItem('fsai_user', JSON.stringify(S.user));
+    toast('Preferences saved! AI will use these next time.', 'ok');
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+// ═══════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════
+function openModal(html) { document.getElementById('modal-box').innerHTML = html; document.getElementById('modal-overlay').classList.add('open'); }
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function closeModalOut(e) { if (e.target === document.getElementById('modal-overlay')) closeModal(); }
+
+// ═══════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════
+function toast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type === 'ok' ? ' ok' : type === 'err' ? ' err' : '');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.className = 'toast', 3800);
+}
+
+// ═══════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════
+function emptyHTML(icon, text, sub) { return `<div class="empty"><span class="empty-icon">${icon}</span><div class="empty-text">${text}</div><div class="empty-sub">${sub}</div></div>`; }
+function loadingHTML() { return `<div class="loading-center"><div class="spinner"></div> Loading…</div>`; }
+function showErr(el, msg) { el.innerHTML = msg; el.style.display = 'block'; }
+function setLoading(btn, loading, label) { if (!btn) return; btn.disabled = loading; btn.innerHTML = loading ? `<span class="spinner"></span> ${label}` : label; }
+</script>
+</body>
+</html>

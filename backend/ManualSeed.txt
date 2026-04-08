@@ -1,0 +1,22 @@
+const mongoose = require("mongoose");
+require("dotenv").config();
+
+const Restaurant = require("./models/Restaurant");
+
+mongoose.connect(process.env.MONGO_URI).then(async () => {
+  await Restaurant.insertMany([
+    {
+      name: "Royal Feast",
+      address: "Benz Circle, Vijayawada",
+      cuisines: ["Indian", "Italian"],
+      tags: ["veg", "nonveg"],
+      priceLevel: 3,
+      spiceLevel: 4,
+      rating: 4.8,
+      emoji: "👑"
+    }
+  ]);
+
+  console.log("Inserted");
+  process.exit();
+});

@@ -1,0 +1,15 @@
+{
+  "name": "rasa-restaurant-recommender",
+  "version": "1.0.0",
+  "description": "AI-Powered Personalized Restaurant Recommender — Full Stack",
+  "scripts": {
+    "install:backend": "cd backend && npm install",
+    "seed": "cd backend && npm run seed",
+    "dev": "cd backend && npm run dev",
+    "start": "cd backend && npm start",
+    "frontend": "npx serve frontend -l 3000"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
