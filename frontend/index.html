@@ -784,9 +784,10 @@ async function doLogin() {
 // ═══════════════════════════════════════════
 // EMAILJS CONFIG
 // ═══════════════════════════════════════════
-const EJS_SERVICE  = 'service_siz01v8';
-const EJS_TEMPLATE = 'template_1m7d4nn';
-const EJS_KEY      = 'sKL1CODDVcySVxD04';
+const EJS_SERVICE           = 'service_siz01v8';
+const EJS_TEMPLATE          = 'template_1m7d4nn';   // OTP template
+const EJS_TEMPLATE_RESET    = 'template_8kjw3qd';   // Forgot password template
+const EJS_KEY               = 'sKL1CODDVcySVxD04';
 
 async function sendOTP() {
   const btn = document.getElementById('reg-btn'), err = document.getElementById('reg-err');
@@ -895,18 +896,18 @@ async function doForgot() {
   if (!email) { showErr(err, 'Please enter your email'); return; }
   setLoading(btn, true, 'Sending…');
   try {
-    // Backend generates reset token and returns the link (and user name)
+    // Backend generates reset token and returns the link + user name
     const data = await api('POST', '/auth/prepare-reset', { email });
     if (data.exists && data.resetLink) {
-      // EmailJS sends the reset link from the browser
-      await emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
-        to_name:  data.name,
-        to_email: email,
-        otp_code: 'Click to reset your password: ' + data.resetLink,
-        app_name: 'Food Spot AI',
+      // EmailJS sends the reset email using the dedicated forgot-password template
+      await emailjs.send(EJS_SERVICE, EJS_TEMPLATE_RESET, {
+        to_name:    data.name,
+        to_email:   email,
+        reset_link: data.resetLink,
+        app_name:   'Food Spot AI',
       }, EJS_KEY);
     }
-    // Always show success (don't reveal if email exists)
+    // Always show success — don't reveal whether email exists
     err.style.display = 'block';
     err.style.background = 'rgba(45,122,79,.07)';
     err.style.borderColor = 'rgba(45,122,79,.2)';
