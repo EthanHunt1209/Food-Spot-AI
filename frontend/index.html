@@ -686,13 +686,23 @@ const S = {
 // ═══════════════════════════════════════════
 // API HELPER
 // ═══════════════════════════════════════════
-async function api(method, path, body) {
+async function api(method, path, body, retry = true) {
   const opts = { method, headers: { 'Content-Type': 'application/json', ...(S.token ? { Authorization: 'Bearer ' + S.token } : {}) } };
   if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(API + path, opts);
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Request failed');
-  return data;
+  try {
+    const res = await fetch(API + path, opts);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Request failed');
+    return data;
+  } catch (e) {
+    // "Failed to fetch" usually means Render free tier is waking up (cold start ~30s)
+    if (retry && (e.message === 'Failed to fetch' || e.message.includes('fetch') || e.message.includes('network'))) {
+      toast('Server is waking up, please wait…', '');
+      await new Promise(r => setTimeout(r, 8000));
+      return api(method, path, body, false); // one retry
+    }
+    throw e;
+  }
 }
 
 // ═══════════════════════════════════════════
