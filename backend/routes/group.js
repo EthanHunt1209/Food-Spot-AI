@@ -122,7 +122,7 @@ router.post('/recommend', protect, async (req, res) => {
 
     // Save a session for each member
     const aggPref = aggregatePreferences(members);
-    await Promise.all(room.members.map(m =>
+    const savedSessions = await Promise.all(room.members.map(m =>
       Session.create({
         userId:        m.userId,
         mode:          'group',
@@ -137,7 +137,7 @@ router.post('/recommend', protect, async (req, res) => {
       })
     ));
 
-    res.json({ success: true, restaurants: scored, room });
+    res.json({ success: true, restaurants: scored, room, sessions: savedSessions });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

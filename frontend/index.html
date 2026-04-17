@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<!-- EmailJS — sends OTP and reset emails directly from browser, no SMTP needed -->
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init("sKL1CODDVcySVxD04");</script>
 <style>
@@ -102,29 +103,6 @@ nav{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.96);backdrop-
 .pc{max-width:1100px;margin:0 auto;padding:2rem}
 .sec-label{font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.6rem}
 
-/* ═══ FOR-YOU WIZARD ═══ */
-.wizard-overlay{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.5);backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;padding:1rem}
-.wizard-overlay.open{display:flex}
-.wizard-card{background:var(--bg);border-radius:var(--rxl);padding:2rem;max-width:520px;width:100%;box-shadow:var(--shadow3);border:1.5px solid var(--border2);animation:fadeUp .25s ease}
-.wiz-step{display:none}
-.wiz-step.active{display:block}
-.wiz-title{font-family:var(--font-h);font-size:22px;font-weight:800;margin-bottom:.4rem;color:var(--text)}
-.wiz-sub{font-size:13px;color:var(--text2);margin-bottom:1.5rem;line-height:1.65}
-.wiz-opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:.5rem}
-.wiz-opt{background:var(--bg2);border:2px solid var(--border2);border-radius:var(--rl);padding:1.3rem 1.1rem;cursor:pointer;transition:all .22s;text-align:center;position:relative}
-.wiz-opt:hover{border-color:var(--gold3);transform:translateY(-2px);box-shadow:var(--shadow2)}
-.wiz-opt.selected{border-color:var(--gold);background:var(--cream2);box-shadow:0 0 0 3px rgba(201,146,26,.1)}
-.wiz-opt-icon{font-size:28px;margin-bottom:.55rem;display:block}
-.wiz-opt-title{font-family:var(--font-h);font-size:15px;font-weight:700;margin-bottom:3px;color:var(--text)}
-.wiz-opt-desc{font-size:11px;color:var(--text2);line-height:1.5}
-.wiz-back{font-size:12px;color:var(--text3);cursor:pointer;text-decoration:underline;display:inline-flex;align-items:center;gap:4px;margin-top:.75rem}
-.wiz-back:hover{color:var(--gold)}
-.wiz-progress{display:flex;gap:5px;margin-bottom:1.5rem}
-.wiz-dot{height:3px;border-radius:2px;background:var(--bg4);flex:1;transition:background .3s}
-.wiz-dot.done{background:var(--gold)}
-.pref-block{background:var(--bg3);border-radius:var(--r);padding:1.1rem;margin-bottom:.9rem;border:1.5px solid var(--border)}
-.pref-block-title{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.7rem;font-weight:600}
-
 /* SEARCH + MAP BUTTON */
 .results-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:1rem;flex-wrap:wrap}
 .results-head .left{flex:1;min-width:220px}
@@ -137,13 +115,6 @@ nav{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.96);backdrop-
 .search-clear:hover{color:var(--text2)}
 .map-btn{display:inline-flex;align-items:center;gap:6px;padding:11px 17px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--border2);font-family:var(--font-b);transition:all .18s;background:var(--bg);color:var(--text);box-shadow:var(--shadow)}
 .map-btn:hover{background:var(--bg3);border-color:var(--gold3);color:var(--gold)}
-
-/* AI CONTEXT BANNER */
-.ai-context-bar{background:linear-gradient(135deg,var(--cream2),var(--gold-light));border:1.5px solid var(--gold3);border-radius:var(--rl);padding:.85rem 1.15rem;margin-bottom:1.25rem;display:flex;gap:10px;align-items:center;box-shadow:var(--shadow);flex-wrap:wrap}
-.ai-context-text{font-size:12px;color:var(--text2);flex:1}
-.ai-context-text strong{color:var(--gold)}
-.ai-retrain-btn{font-size:11px;padding:5px 12px;border-radius:20px;border:1.5px solid var(--gold3);background:var(--bg);color:var(--gold);cursor:pointer;font-weight:600;font-family:var(--font-b);transition:all .15s;white-space:nowrap}
-.ai-retrain-btn:hover{background:var(--gold-light)}
 
 /* RESTAURANT GRID */
 .rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(295px,1fr));gap:14px}
@@ -161,7 +132,6 @@ nav{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.96);backdrop-
 .mbar{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-bottom:10px}
 .mbar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--orange),var(--gold));transition:width .5s ease}
 .rcard-foot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);padding-top:8px;font-size:12px;color:var(--text2)}
-.feedback-badge{background:var(--gold-light);color:var(--gold);border:1px solid var(--gold3);padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
 
 /* DETAIL */
 .dhead{background:linear-gradient(135deg,var(--cream) 0%,var(--bg3) 100%);border-bottom:1px solid var(--border);padding:2rem}
@@ -213,6 +183,11 @@ nav{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.96);backdrop-
 .otp-resend a{color:var(--gold);cursor:pointer;font-weight:600}
 .otp-resend a:hover{text-decoration:underline}
 
+/* FILTER BAR */
+.filter-bar{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rl);padding:1.3rem;margin-bottom:1.5rem;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;box-shadow:var(--shadow)}
+.fg{display:flex;flex-direction:column;gap:7px;flex:1;min-width:130px}
+.fg-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+
 /* GROUP ROOM */
 .lobby-wrap{max-width:500px;margin:0 auto;padding:2.5rem 0}
 .lobby-title{font-family:var(--font-h);font-size:clamp(22px,4vw,32px);font-weight:800;letter-spacing:-.6px;margin-bottom:.5rem;text-align:center;color:var(--text)}
@@ -262,7 +237,7 @@ textarea:focus{border-color:var(--gold)}
 .like-b.yes{background:rgba(45,122,79,.1);color:var(--green);border-color:rgba(45,122,79,.3)}
 .like-b.no{background:rgba(192,57,43,.09);color:var(--red);border-color:rgba(192,57,43,.2)}
 
-/* FEEDBACK DROPDOWN */
+/* DROPDOWN FEEDBACK ITEMS */
 .fb-dropdown-wrap{margin-top:1rem;border-top:1.5px solid var(--border);padding-top:1rem}
 .fb-dropdown-title{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:.7rem;display:flex;align-items:center;gap:6px}
 .fb-select-wrap{position:relative;margin-bottom:.8rem}
@@ -290,6 +265,8 @@ textarea:focus{border-color:var(--gold)}
 .hi-name{font-family:var(--font-h);font-size:15px;font-weight:700;margin-bottom:2px;color:var(--text)}
 .hi-meta{font-size:11px;color:var(--text3)}
 .pend-chip{background:rgba(224,94,26,.1);color:var(--orange);border:1.5px solid rgba(224,94,26,.22);padding:2px 10px;border-radius:12px;font-size:11px;font-weight:600}
+
+/* HISTORY DETAIL MODAL */
 .hist-detail{margin-top:1.1rem;background:var(--bg3);border-radius:var(--r);padding:1rem;border:1.5px solid var(--border)}
 .hd-stars{display:flex;gap:4px;margin:.4rem 0}
 .hd-star{font-size:17px;color:var(--bg4)}
@@ -357,7 +334,11 @@ textarea:focus{border-color:var(--gold)}
 .spin-icon{font-size:56px;animation:spinIn .4s ease;display:inline-block}
 @keyframes spinIn{from{transform:rotate(-25deg) scale(.7)}to{transform:rotate(0) scale(1)}}
 
-/* NEARBY MAP */
+/* PROFILE */
+.profile-grid{display:grid;grid-template-columns:280px 1fr;gap:20px}
+.prof-card{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rl);padding:1.6rem;margin-bottom:14px;box-shadow:var(--shadow)}
+
+/* NEARBY MAP PAGE */
 #map-container{height:430px;border-radius:var(--rl);overflow:hidden;border:1.5px solid var(--border2);margin-bottom:1.6rem;position:relative;box-shadow:var(--shadow)}
 #nearby-map{width:100%;height:100%}
 .map-locate-btn{position:absolute;top:13px;right:13px;z-index:500;background:var(--bg);border:1.5px solid var(--border2);border-radius:var(--r);padding:8px 15px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-b);color:var(--text);display:flex;align-items:center;gap:5px;transition:all .18s;box-shadow:var(--shadow)}
@@ -374,20 +355,11 @@ textarea:focus{border-color:var(--gold)}
 .user-marker{width:14px;height:14px;border-radius:50%;background:rgba(224,94,26,.9);border:2.5px solid #fff;box-shadow:0 0 0 6px rgba(224,94,26,.18),0 2px 8px rgba(0,0,0,.3);animation:ripple 2s ease-in-out infinite}
 @keyframes ripple{0%,100%{box-shadow:0 0 0 6px rgba(224,94,26,.18),0 2px 8px rgba(0,0,0,.3)}50%{box-shadow:0 0 0 12px rgba(224,94,26,.05),0 2px 8px rgba(0,0,0,.3)}}
 
-/* PROFILE */
-.profile-grid{display:grid;grid-template-columns:280px 1fr;gap:20px}
-.prof-card{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rl);padding:1.6rem;margin-bottom:14px;box-shadow:var(--shadow)}
-
-/* SECTION DIVIDER */
+/* DECORATIVE DIVIDER */
 .section-divider{max-width:1100px;margin:0 auto;padding:0 2rem .5rem;display:flex;align-items:center;gap:14px}
 .section-divider span{font-size:11px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.1em;white-space:nowrap}
 .section-divider::before,.section-divider::after{content:'';flex:1;height:1.5px;background:linear-gradient(to right,var(--gold3),transparent)}
 .section-divider::before{background:linear-gradient(to left,var(--gold3),transparent)}
-
-/* FILTER BAR (kept for reference, wizard replaces main flow) */
-.filter-bar{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rl);padding:1.3rem;margin-bottom:1.5rem;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;box-shadow:var(--shadow)}
-.fg{display:flex;flex-direction:column;gap:7px;flex:1;min-width:130px}
-.fg-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
 
 @media(max-width:768px){
   .hero{grid-template-columns:1fr;padding:2.5rem 1.5rem 2rem}
@@ -399,7 +371,6 @@ textarea:focus{border-color:var(--gold)}
   .profile-grid{grid-template-columns:1fr}
   .pc{padding:1.25rem}
   nav{padding:0 1rem}
-  .wiz-opts{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -418,102 +389,6 @@ textarea:focus{border-color:var(--gold)}
 <div class="toast" id="toast"></div>
 <div class="modal-overlay" id="modal-overlay" onclick="closeModalOut(event)">
   <div class="modal" id="modal-box"></div>
-</div>
-
-<!-- ═══ FOR-YOU WIZARD OVERLAY ═══ -->
-<div class="wizard-overlay" id="wizard-overlay">
-  <div class="wizard-card">
-    <div class="wiz-progress" id="wiz-progress"></div>
-
-    <!-- STEP 1: Regular or Try New -->
-    <div class="wiz-step active" id="wiz-step-1">
-      <div class="wiz-title">What are you feeling? 🍽️</div>
-      <div class="wiz-sub">Tell us what kind of experience you're looking for today</div>
-      <div class="wiz-opts">
-        <div class="wiz-opt" onclick="wizChoose('regular')">
-          <span class="wiz-opt-icon">⭐</span>
-          <div class="wiz-opt-title">Regular Choice</div>
-          <div class="wiz-opt-desc">Restaurants based on your known taste profile & past feedback</div>
-        </div>
-        <div class="wiz-opt" onclick="wizChoose('new')">
-          <span class="wiz-opt-icon">✨</span>
-          <div class="wiz-opt-title">Try Something New</div>
-          <div class="wiz-opt-desc">Explore places you haven't visited yet</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- STEP 2a: Regular — set spice + budget -->
-    <div class="wiz-step" id="wiz-step-2a">
-      <div class="wiz-title">Fine-tune your taste 🎚️</div>
-      <div class="wiz-sub">We'll factor in your past feedback too — just adjust if you want something different today</div>
-      <div class="pref-block">
-        <div class="pref-block-title">Budget</div>
-        <div class="sl-row">
-          <label>Level</label>
-          <input type="range" min="1" max="3" step="1" value="2" id="wiz-budget" oninput="document.getElementById('wiz-bv').textContent=['₹','₹₹','₹₹₹'][this.value-1]">
-          <span class="sl-val" id="wiz-bv">₹₹</span>
-        </div>
-      </div>
-      <div class="pref-block">
-        <div class="pref-block-title">Spice Level</div>
-        <div class="sl-row">
-          <label>Heat</label>
-          <input type="range" min="1" max="5" step="1" value="3" id="wiz-spice" oninput="document.getElementById('wiz-sv').textContent=this.value">
-          <span class="sl-val" id="wiz-sv">3</span>
-        </div>
-      </div>
-      <button class="btn btn-p btn-w" onclick="wizSubmitRegular()">Show My Recommendations →</button>
-      <div class="wiz-back" onclick="wizGoStep(1)">← Back</div>
-    </div>
-
-    <!-- STEP 2b: Try New — Surprise or Select Preferences -->
-    <div class="wiz-step" id="wiz-step-2b">
-      <div class="wiz-title">How new do you want to go? 🎲</div>
-      <div class="wiz-sub">Full AI surprise or set your own filters</div>
-      <div class="wiz-opts">
-        <div class="wiz-opt" onclick="wizSurprise()">
-          <span class="wiz-opt-icon">🎲</span>
-          <div class="wiz-opt-title">Surprise Me!</div>
-          <div class="wiz-opt-desc">Let AI pick the best unfamiliar restaurant for you — fully random & smart</div>
-        </div>
-        <div class="wiz-opt" onclick="wizGoStep('3b')">
-          <span class="wiz-opt-icon">🎛️</span>
-          <div class="wiz-opt-title">Set Preferences</div>
-          <div class="wiz-opt-desc">Choose cuisines, budget & spice — AI recommends from what you haven't tried</div>
-        </div>
-      </div>
-      <div class="wiz-back" onclick="wizGoStep(1)">← Back</div>
-    </div>
-
-    <!-- STEP 3b: Set preferences for Try New -->
-    <div class="wiz-step" id="wiz-step-3b">
-      <div class="wiz-title">Your preferences 🎛️</div>
-      <div class="wiz-sub">Pick what sounds good — we'll find places you haven't been to yet</div>
-      <div class="pref-block">
-        <div class="pref-block-title">Cuisines</div>
-        <div class="chips" id="wiz-cuisines"></div>
-      </div>
-      <div class="pref-block">
-        <div class="pref-block-title">Budget</div>
-        <div class="sl-row">
-          <label>Level</label>
-          <input type="range" min="1" max="3" step="1" value="2" id="wiz-budget-new" oninput="document.getElementById('wiz-bv-new').textContent=['₹','₹₹','₹₹₹'][this.value-1]">
-          <span class="sl-val" id="wiz-bv-new">₹₹</span>
-        </div>
-      </div>
-      <div class="pref-block">
-        <div class="pref-block-title">Spice Level</div>
-        <div class="sl-row">
-          <label>Heat</label>
-          <input type="range" min="1" max="5" step="1" value="3" id="wiz-spice-new" oninput="document.getElementById('wiz-sv-new').textContent=this.value">
-          <span class="sl-val" id="wiz-sv-new">3</span>
-        </div>
-      </div>
-      <button class="btn btn-p btn-w" onclick="wizSubmitNew()">Find New Places →</button>
-      <div class="wiz-back" onclick="wizGoStep('2b')">← Back</div>
-    </div>
-  </div>
 </div>
 
 <!-- ═══ HOME ═══ -->
@@ -547,6 +422,7 @@ textarea:focus{border-color:var(--gold)}
 <div class="page" id="page-auth">
   <div class="auth-wrap">
     <div class="auth-card">
+      <!-- LOGIN -->
       <div id="auth-login">
         <div class="auth-title">Welcome back 👋</div>
         <div class="auth-sub">Sign in to get AI-powered recommendations</div>
@@ -560,6 +436,8 @@ textarea:focus{border-color:var(--gold)}
         <div style="text-align:center;margin-bottom:.5rem"><button style="background:none;border:none;font-size:12px;color:var(--text3);cursor:pointer;font-family:var(--font-b)" onclick="showForgot()">Forgot password?</button></div>
         <div class="auth-switch">No account? <a onclick="showReg()">Create one →</a></div>
       </div>
+
+      <!-- REGISTER STEP 1 -->
       <div id="auth-reg" style="display:none">
         <div class="auth-title">Create account ✨</div>
         <div class="auth-sub">We'll send a 6-digit code to verify your email</div>
@@ -572,7 +450,7 @@ textarea:focus{border-color:var(--gold)}
         </div>
         <div class="f-err" id="reg-err"></div>
         <div class="pref-section">
-          <div class="pref-sec-title">Food preferences (optional)</div>
+          <div class="pref-sec-title">Food preferences (optional — helps AI recommendations)</div>
           <div style="margin-bottom:.7rem"><div style="font-size:11px;color:var(--text3);margin-bottom:.45rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em">Favourite cuisines</div><div class="chips" id="reg-cuisines"></div></div>
           <div class="sl-row" style="margin-bottom:.55rem"><label>Budget</label><input type="range" min="1" max="3" step="1" value="2" id="reg-budget" oninput="document.getElementById('reg-bv').textContent=['₹','₹₹','₹₹₹'][this.value-1]"><span class="sl-val" id="reg-bv">₹₹</span></div>
           <div class="sl-row"><label>Spice</label><input type="range" min="1" max="5" step="1" value="3" id="reg-spice" oninput="document.getElementById('reg-sv').textContent=this.value"><span class="sl-val" id="reg-sv">3</span></div>
@@ -580,6 +458,8 @@ textarea:focus{border-color:var(--gold)}
         <button class="btn btn-p btn-w" id="reg-btn" onclick="sendOTP()">Send verification code →</button>
         <div class="auth-switch">Have an account? <a onclick="showLogin()">Sign in →</a></div>
       </div>
+
+      <!-- REGISTER STEP 2 — OTP -->
       <div id="auth-otp" style="display:none">
         <div class="auth-title">Check your email 📬</div>
         <div class="auth-sub" id="otp-sub">We sent a 6-digit code to <strong></strong>. Enter it below.</div>
@@ -594,7 +474,12 @@ textarea:focus{border-color:var(--gold)}
         <div class="f-err" id="otp-err"></div>
         <button class="btn btn-p btn-w" id="otp-btn" onclick="verifyOTP()">Verify &amp; create account</button>
         <div class="otp-resend">Didn't get it? <a onclick="resendOTP()">Resend code</a> · <a onclick="showReg()">Change email</a></div>
+        <div style="margin-top:.75rem;background:rgba(201,146,26,.08);border:1px solid var(--gold3);border-radius:var(--r);padding:.75rem;font-size:12px;color:var(--text2)">
+          💡 <strong>Not receiving OTP?</strong> Check your spam/junk folder. The code was sent via EmailJS — it should arrive within 30 seconds. Click "Resend code" if needed.
+        </div>
       </div>
+
+      <!-- FORGOT PASSWORD -->
       <div id="auth-forgot" style="display:none">
         <div class="auth-title">Forgot password? 🔑</div>
         <div class="auth-sub">Enter your email and we'll send a reset link.</div>
@@ -615,22 +500,122 @@ textarea:focus{border-color:var(--gold)}
     <div class="pg-sub" id="personal-sub">AI-powered recommendations tuned to your taste</div>
   </div></div>
   <div class="pc">
-    <div id="ai-context-banner" style="display:none" class="ai-context-bar">
-      <span style="font-size:18px">🤖</span>
-      <div class="ai-context-text" id="ai-context-text"></div>
-      <button class="ai-retrain-btn" onclick="openWizard()">Change preferences</button>
-    </div>
-    <div class="results-head">
-      <div class="left">
-        <div class="search-wrap" style="margin-bottom:0">
-          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input class="search-input" id="search-personal" placeholder="Search restaurants, cuisines, dishes…" oninput="filterPersonal()">
-          <button class="search-clear" id="sc-personal" onclick="clearSearch('personal')">×</button>
+
+    <!-- ── STEP 1: Mode chooser ─────────────────────────── -->
+    <div id="step-mode">
+      <div style="text-align:center;padding:1.5rem 0 1rem">
+        <div style="font-family:var(--font-h);font-size:20px;font-weight:700;margin-bottom:.4rem;color:var(--text)" id="step-mode-greeting">What are you in the mood for?</div>
+        <div style="font-size:13px;color:var(--text3)">Choose how you want to discover today</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:520px;margin:0 auto 2rem">
+        <div class="mc feat" onclick="chooseMode('regular')" style="text-align:center;padding:1.8rem 1rem">
+          <span class="mc-icon">🍛</span>
+          <div class="mc-title">My Regular Taste</div>
+          <div class="mc-desc">Based on your saved preferences</div>
+        </div>
+        <div class="mc orange" onclick="chooseMode('new')" style="text-align:center;padding:1.8rem 1rem">
+          <span class="mc-icon">🌟</span>
+          <div class="mc-title">Try Something New</div>
+          <div class="mc-desc">Explore outside your usual picks</div>
         </div>
       </div>
-      <button class="map-btn" onclick="openMapView('personal')">📍 View Map</button>
     </div>
-    <div id="personal-grid"><div class="loading-center"><div class="spinner"></div> Loading recommendations…</div></div>
+
+    <!-- ── STEP 2A: Regular — confirm spice + budget ─────── -->
+    <div id="step-regular" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem">
+        <button onclick="backToMode()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;font-family:var(--font-b);display:flex;align-items:center;gap:4px">← Back</button>
+        <div style="font-family:var(--font-h);font-size:18px;font-weight:700;color:var(--text)">Your Regular Taste</div>
+      </div>
+      <div class="filter-bar" style="margin-bottom:1.25rem">
+        <div class="fg"><div class="fg-label">Cuisine</div><div class="chips" id="cuisine-chips"></div></div>
+        <div class="fg" style="min-width:148px;max-width:185px">
+          <div class="fg-label">Budget</div>
+          <div class="sl-row" style="margin:0"><input type="range" min="1" max="3" step="1" value="2" id="budget-sl" oninput="S.budget=+this.value;document.getElementById('bv').textContent=['₹','₹₹','₹₹₹'][this.value-1]"><span class="sl-val" id="bv">₹₹</span></div>
+        </div>
+        <div class="fg" style="min-width:148px;max-width:185px">
+          <div class="fg-label">Spice Level</div>
+          <div class="sl-row" style="margin:0"><input type="range" min="1" max="5" step="1" value="3" id="spice-sl" oninput="S.spice=+this.value;document.getElementById('sv').textContent=this.value"><span class="sl-val" id="sv">3</span></div>
+        </div>
+      </div>
+      <button class="btn btn-p" style="width:100%;justify-content:center;margin-bottom:1.5rem" id="get-regular-btn" onclick="fetchPersonal('regular')">
+        🤖 Get My Recommendations
+      </button>
+    </div>
+
+    <!-- ── STEP 2B: New — surprise or select preferences ─── -->
+    <div id="step-new" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem">
+        <button onclick="backToMode()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;font-family:var(--font-b);display:flex;align-items:center;gap:4px">← Back</button>
+        <div style="font-family:var(--font-h);font-size:18px;font-weight:700;color:var(--text)">Try Something New</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:520px;margin:0 auto 1.5rem">
+        <div class="mc" onclick="chooseNewSub('surprise')" style="text-align:center;padding:1.6rem 1rem;border-color:rgba(224,94,26,.3)">
+          <span class="mc-icon">🎲</span>
+          <div class="mc-title">Surprise Me</div>
+          <div class="mc-desc">AI picks the perfect place just for you — no filters needed</div>
+        </div>
+        <div class="mc" onclick="chooseNewSub('preferences')" style="text-align:center;padding:1.6rem 1rem">
+          <span class="mc-icon">🎯</span>
+          <div class="mc-title">Set Preferences</div>
+          <div class="mc-desc">Tell AI what you're in the mood for today</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STEP 3: Set preferences for new ──────────────── -->
+    <div id="step-preferences" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem">
+        <button onclick="backToNew()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;font-family:var(--font-b);display:flex;align-items:center;gap:4px">← Back</button>
+        <div style="font-family:var(--font-h);font-size:18px;font-weight:700;color:var(--text)">What are you craving?</div>
+      </div>
+      <!-- AI Natural language input -->
+      <div style="background:linear-gradient(135deg,var(--cream2),var(--gold-light));border:1.5px solid var(--gold3);border-radius:var(--rl);padding:1rem 1.25rem;margin-bottom:1.25rem;box-shadow:var(--shadow)">
+        <div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">🤖 Ask AI in plain English (optional)</div>
+        <div style="display:flex;gap:8px">
+          <input id="ai-chat-input" class="f-input" style="flex:1;margin:0;background:var(--bg);font-size:13px" placeholder='e.g. "light lunch under ₹200" or "something spicy for dinner"' onkeydown="if(event.key==='Enter')askAI()">
+          <button class="btn btn-p btn-s" onclick="askAI()" id="ai-chat-btn">Ask</button>
+        </div>
+      </div>
+      <div class="filter-bar" style="margin-bottom:1.25rem">
+        <div class="fg"><div class="fg-label">Cuisine</div><div class="chips" id="new-cuisine-chips"></div></div>
+        <div class="fg" style="min-width:148px;max-width:185px">
+          <div class="fg-label">Budget</div>
+          <div class="sl-row" style="margin:0"><input type="range" min="1" max="3" step="1" value="2" id="new-budget-sl" oninput="S.newBudget=+this.value;document.getElementById('nbv').textContent=['₹','₹₹','₹₹₹'][this.value-1]"><span class="sl-val" id="nbv">₹₹</span></div>
+        </div>
+        <div class="fg" style="min-width:148px;max-width:185px">
+          <div class="fg-label">Spice Level</div>
+          <div class="sl-row" style="margin:0"><input type="range" min="1" max="5" step="1" value="3" id="new-spice-sl" oninput="S.newSpice=+this.value;document.getElementById('nsv').textContent=this.value"><span class="sl-val" id="nsv">3</span></div>
+        </div>
+      </div>
+      <button class="btn btn-p" style="width:100%;justify-content:center;margin-bottom:1.5rem" id="get-new-btn" onclick="fetchPersonal('new')">
+        🤖 Find New Options
+      </button>
+    </div>
+
+    <!-- ── RESULTS (shared by all paths) ─────────────────── -->
+    <div id="personal-results" style="display:none">
+      <div class="results-head" style="margin-bottom:1rem">
+        <div class="left">
+          <div class="search-wrap" style="margin-bottom:0">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input class="search-input" id="search-personal" placeholder="Search restaurants, cuisines, dishes…" oninput="filterPersonal()">
+            <button class="search-clear" id="sc-personal" onclick="clearSearch('personal')">×</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-g btn-s" onclick="backToMode()">← Change</button>
+          <button class="map-btn" onclick="openMapView('personal')">📍 Map</button>
+        </div>
+      </div>
+      <!-- AI result banner (shown when Groq returns a reason) -->
+      <div id="ai-chat-result" style="display:none;margin-bottom:1.25rem;background:var(--bg);border:1.5px solid var(--gold3);border-radius:var(--rl);padding:1rem 1.25rem;box-shadow:var(--shadow)">
+        <div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">🤖 AI says</div>
+        <div id="ai-chat-text" style="font-size:13px;color:var(--text2);line-height:1.65"></div>
+      </div>
+      <div id="personal-grid"></div>
+    </div>
+
   </div>
 </div>
 
@@ -770,6 +755,11 @@ const S = {
   allRests: [],
   personalRests: [], personalFiltered: [], groupRests: [], groupFiltered: [],
   currentSession: null, currentRestId: null, restFrom: 'personal',
+  selCuisines: [], budget: 2, spice: 3, newBudget: 2, newSpice: 3, submode: 'regular',
+  personalMode: null,  // null = not chosen yet; 'regular'|'surprise'|'select-preferences'
+  groupVote: {},        // { restaurantId: { yes: 0, no: 0, voters: [] } }
+  groupAdminPick: null, // restaurant id admin picked
+  groupSessionId: null, // current user's group session id
   room: null,
   pendingFeedback: [],
   afterAuth: null,
@@ -777,10 +767,7 @@ const S = {
   nearbyMap: null, userMarker: null, radiusCircle: null, mapMarkers: {},
   userLatLng: null,
   page: 'home',
-  // Wizard state
-  wizMode: null,       // 'regular' | 'new-surprise' | 'new-pref'
-  wizParams: {},       // collected wizard params
-  isColdStart: false,
+  historyFeedbacks: {},
 };
 
 // ═══════════════════════════════════════════
@@ -806,10 +793,11 @@ async function api(method, path, body, retry = true) {
     if (!res.ok) throw new Error(data.message || 'Request failed');
     return data;
   } catch (e) {
+    // "Failed to fetch" usually means Render free tier is waking up (cold start ~30s)
     if (retry && (e.message === 'Failed to fetch' || e.message.includes('fetch') || e.message.includes('network'))) {
       toast('Server is waking up, please wait…', '');
       await new Promise(r => setTimeout(r, 8000));
-      return api(method, path, body, false);
+      return api(method, path, body, false); // one retry
     }
     throw e;
   }
@@ -822,10 +810,8 @@ function goPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
   S.page = id; window.scrollTo(0, 0);
-  const map = { group: renderGroupLobby, history: fetchHistory, feedback: fetchFeedback, profile: renderProfile, nearby: initNearby };
+  const map = { personal: initPersonalPage, group: renderGroupLobby, history: fetchHistory, feedback: fetchFeedback, profile: renderProfile, nearby: initNearby };
   if (map[id]) map[id]();
-  // For personal page: open wizard
-  if (id === 'personal') initPersonalPage();
 }
 function requireAuth(dest) {
   if (S.user) { goPage(dest); return; }
@@ -855,6 +841,7 @@ function showLogin() { _hideAllAuth(); document.getElementById('auth-login').sty
 function showReg()   { _hideAllAuth(); document.getElementById('auth-reg').style.display = ''; }
 function showForgot(){ _hideAllAuth(); document.getElementById('auth-forgot').style.display = ''; }
 function showOTP()   { _hideAllAuth(); document.getElementById('auth-otp').style.display = ''; }
+
 function togglePw(id, btn) {
   const el = document.getElementById(id);
   const vis = el.type === 'password';
@@ -885,15 +872,20 @@ async function doLogin() {
     const data = await api('POST', '/auth/login', { email, password: pw });
     onAuth(data);
   } catch (e) {
-    showErr(err, e.message);
+    if (e.message.includes('verify')) {
+      showErr(err, e.message + ` <a onclick="resendOTPForEmail('${email}')" style="color:var(--gold);cursor:pointer;font-weight:600">Resend OTP</a>`);
+    } else showErr(err, e.message);
   }
   setLoading(btn, false, 'Sign in');
 }
 
-const EJS_SERVICE = 'service_siz01v8';
-const EJS_TEMPLATE = 'template_1m7d4nn';
-const EJS_TEMPLATE_RESET = 'template_8kjw3qd';
-const EJS_KEY = 'sKL1CODDVcySVxD04';
+// ═══════════════════════════════════════════
+// EMAILJS CONFIG
+// ═══════════════════════════════════════════
+const EJS_SERVICE           = 'service_siz01v8';
+const EJS_TEMPLATE          = 'template_1m7d4nn';   // OTP template
+const EJS_TEMPLATE_RESET    = 'template_8kjw3qd';   // Forgot password template
+const EJS_KEY               = 'sKL1CODDVcySVxD04';
 
 async function sendOTP() {
   const btn = document.getElementById('reg-btn'), err = document.getElementById('reg-err');
@@ -906,11 +898,23 @@ async function sendOTP() {
   err.style.display = 'none';
   if (!name || !email || !pw) { showErr(err, 'Please fill all required fields'); return; }
   if (pw.length < 6) { showErr(err, 'Password must be at least 6 characters'); return; }
+
   S.regData = { name, email, password: pw, preferredCuisines: cuisines, budgetPreference: budget, spicePreference: spice };
   setLoading(btn, true, 'Sending OTP…');
+
   try {
+    // Step 1 — backend creates user + hashed OTP, returns plain OTP
     const data = await api('POST', '/auth/prepare-otp', S.regData);
-    await emailjs.send(EJS_SERVICE, EJS_TEMPLATE, { to_name: name, to_email: email, otp_code: data.otp, app_name: 'Food Spot AI' }, EJS_KEY);
+
+    // Step 2 — EmailJS sends the OTP from the browser (no SMTP, no Render port issues)
+    await emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
+      to_name:  name,
+      to_email: email,
+      otp_code: data.otp,
+      app_name: 'Food Spot AI',
+    }, EJS_KEY);
+
+    // Step 3 — show OTP input
     document.querySelector('#otp-sub strong').textContent = email;
     showOTP();
     toast('Verification code sent to ' + email, 'ok');
@@ -920,6 +924,8 @@ async function sendOTP() {
   }
   setLoading(btn, false, 'Send verification code →');
 }
+
+// Fallback — register without OTP
 async function directRegister() {
   const err = document.getElementById('reg-err');
   if (!S.regData) return;
@@ -935,6 +941,7 @@ async function directRegister() {
     setLoading(btn, false, 'Send verification code →');
   }
 }
+
 async function verifyOTP() {
   const btn = document.getElementById('otp-btn'), err = document.getElementById('otp-err');
   const otp = getOTP();
@@ -948,16 +955,38 @@ async function verifyOTP() {
   } catch (e) { showErr(err, e.message); }
   setLoading(btn, false, 'Verify & create account');
 }
+
 async function resendOTP() {
   if (!S.regData) { toast('Please fill registration details first', 'err'); showReg(); return; }
   try {
     const data = await api('POST', '/auth/prepare-otp', S.regData);
-    await emailjs.send(EJS_SERVICE, EJS_TEMPLATE, { to_name: S.regData.name, to_email: S.regData.email, otp_code: data.otp, app_name: 'Food Spot AI' }, EJS_KEY);
+    await emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
+      to_name: S.regData.name, to_email: S.regData.email,
+      otp_code: data.otp, app_name: 'Food Spot AI',
+    }, EJS_KEY);
     ['o1','o2','o3','o4','o5','o6'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('o1').focus();
     toast('New code sent to ' + S.regData.email, 'ok');
-  } catch (e) { toast((typeof e === 'object' && e.text) ? e.text : (e.message || 'Failed to resend'), 'err'); }
+  } catch (e) {
+    toast((typeof e === 'object' && e.text) ? e.text : (e.message || 'Failed to resend'), 'err');
+  }
 }
+async function resendOTPForEmail(email) {
+  if (S.regData && S.regData.email === email) {
+    try {
+      const data = await api('POST', '/auth/prepare-otp', S.regData);
+      await emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
+        to_name: S.regData.name, to_email: email,
+        otp_code: data.otp, app_name: 'Food Spot AI',
+      }, EJS_KEY);
+      toast('OTP sent to ' + email, 'ok');
+    } catch (e) { toast(e.message || 'Failed', 'err'); }
+    return;
+  }
+  toast('Please go to sign up and enter your details again', 'err');
+  showReg(); document.getElementById('reg-email').value = email || '';
+}
+
 async function doForgot() {
   const btn = document.getElementById('forgot-btn'), err = document.getElementById('forgot-err');
   const email = document.getElementById('forgot-email').value.trim();
@@ -965,19 +994,73 @@ async function doForgot() {
   if (!email) { showErr(err, 'Please enter your email'); return; }
   setLoading(btn, true, 'Sending…');
   try {
+    // Backend generates reset token and returns the link + user name
     const data = await api('POST', '/auth/prepare-reset', { email });
     if (data.exists && data.resetLink) {
-      await emailjs.send(EJS_SERVICE, EJS_TEMPLATE_RESET, { to_name: data.name, to_email: email, reset_link: data.resetLink, app_name: 'Food Spot AI' }, EJS_KEY);
+      // EmailJS sends the reset email using the dedicated forgot-password template
+      await emailjs.send(EJS_SERVICE, EJS_TEMPLATE_RESET, {
+        to_name:    data.name,
+        to_email:   email,
+        reset_link: data.resetLink,
+        app_name:   'Food Spot AI',
+      }, EJS_KEY);
     }
+    // Always show success — don't reveal whether email exists
     err.style.display = 'block';
     err.style.background = 'rgba(45,122,79,.07)';
     err.style.borderColor = 'rgba(45,122,79,.2)';
     err.style.color = 'var(--green)';
     err.textContent = 'If an account with that email exists, a reset link has been sent.';
   } catch (e) {
-    showErr(err, (typeof e === 'object' && e.text) ? e.text : (e.message || 'Failed to send'));
+    const msg = (typeof e === 'object' && e.text) ? e.text : (e.message || 'Failed to send');
+    showErr(err, msg);
   }
   setLoading(btn, false, 'Send reset link');
+}
+
+// ═══════════════════════════════════════════
+// GROQ AI CHAT
+// ═══════════════════════════════════════════
+async function askAI() {
+  if (!S.user) { toast('Please log in first', 'err'); return; }
+  const input  = document.getElementById('ai-chat-input');
+  const btn    = document.getElementById('ai-chat-btn');
+  const result = document.getElementById('ai-chat-result');
+  const text   = document.getElementById('ai-chat-text');
+  const msg    = input.value.trim();
+  if (!msg) return;
+
+  setLoading(btn, true, 'Thinking…');
+  if (result) result.style.display = 'none';
+
+  // Make sure results panel is visible
+  showStep('personal-results');
+  document.getElementById('personal-grid').innerHTML = loadingHTML();
+
+  try {
+    const data = await api('POST', '/groq/recommend', { message: msg });
+    if (data.restaurants?.length) {
+      S.personalRests  = data.restaurants;
+      S.personalFiltered = data.restaurants;
+      S.submode = 'preferences';
+      if (text)   text.innerHTML = `<strong>Found ${data.restaurants.length} restaurants for "${msg}"</strong><br>${data.restaurants[0]?.aiReason || ''}`;
+      if (result) result.style.display = 'block';
+      filterPersonal();
+      input.value = '';
+      toast('AI recommendations ready!', 'ok');
+    }
+  } catch (e) {
+    try {
+      const data = await api('POST', '/groq/chat', { message: msg });
+      if (text)   text.innerHTML = data.reply || 'No response.';
+      if (result) result.style.display = 'block';
+      document.getElementById('personal-grid').innerHTML = '';
+    } catch (e2) {
+      toast('AI unavailable. Loading standard recommendations.', 'err');
+      fetchPersonal('regular');
+    }
+  }
+  setLoading(btn, false, 'Ask');
 }
 
 function onAuth(data) {
@@ -994,85 +1077,6 @@ function logout() {
   S.token = null; S.user = null;
   localStorage.removeItem('fsai_token'); localStorage.removeItem('fsai_user');
   updateNav(); goPage('home'); toast('Signed out');
-}
-
-// ═══════════════════════════════════════════
-// WIZARD — For You Flow
-// ═══════════════════════════════════════════
-function openWizard() {
-  // Pre-fill wizard sliders from user prefs
-  if (S.user) {
-    const b = S.user.budgetPreference || 2;
-    const sp = S.user.spicePreference || 3;
-    document.getElementById('wiz-budget').value = b;
-    document.getElementById('wiz-bv').textContent = ['₹','₹₹','₹₹₹'][b-1];
-    document.getElementById('wiz-spice').value = sp;
-    document.getElementById('wiz-sv').textContent = sp;
-    document.getElementById('wiz-budget-new').value = b;
-    document.getElementById('wiz-bv-new').textContent = ['₹','₹₹','₹₹₹'][b-1];
-    document.getElementById('wiz-spice-new').value = sp;
-    document.getElementById('wiz-sv-new').textContent = sp;
-  }
-  // Build cuisine chips for "new pref" step
-  const el = document.getElementById('wiz-cuisines');
-  if (el) {
-    const saved = S.user?.preferredCuisines || [];
-    el.innerHTML = ALL_CUISINES.map(c =>
-      `<button class="chip ${saved.includes(c)?'on':''}" onclick="this.classList.toggle('on')">${c}</button>`
-    ).join('');
-  }
-  wizGoStep(1);
-  document.getElementById('wizard-overlay').classList.add('open');
-}
-function closeWizard() {
-  document.getElementById('wizard-overlay').classList.remove('open');
-}
-function wizGoStep(step) {
-  document.querySelectorAll('.wiz-step').forEach(s => s.classList.remove('active'));
-  const target = document.getElementById('wiz-step-' + step);
-  if (target) target.classList.add('active');
-  // Update progress dots
-  const steps = [1, '2a', '2b', '3b'];
-  const idx = steps.indexOf(step);
-  const prog = document.getElementById('wiz-progress');
-  prog.innerHTML = steps.map((s, i) =>
-    `<div class="wiz-dot ${i <= idx ? 'done' : ''}"></div>`
-  ).join('');
-}
-function wizChoose(mode) {
-  S.wizMode = mode;
-  document.querySelectorAll('.wiz-opt').forEach(o => o.classList.remove('selected'));
-  event.currentTarget.classList.add('selected');
-  setTimeout(() => {
-    if (mode === 'regular') wizGoStep('2a');
-    else wizGoStep('2b');
-  }, 200);
-}
-function wizSurprise() {
-  closeWizard();
-  S.wizMode = 'new-surprise';
-  S.wizParams = { submode: 'surprise' };
-  fetchPersonalWithParams(S.wizParams);
-}
-async function wizSubmitRegular() {
-  const budget = +document.getElementById('wiz-budget').value;
-  const spice  = +document.getElementById('wiz-spice').value;
-  S.wizMode = 'regular';
-  S.wizParams = {
-    cuisines: S.user?.preferredCuisines || [],
-    budget, spice, submode: 'regular'
-  };
-  closeWizard();
-  fetchPersonalWithParams(S.wizParams);
-}
-async function wizSubmitNew() {
-  const cuisines = Array.from(document.querySelectorAll('#wiz-cuisines .chip.on')).map(c => c.textContent);
-  const budget   = +document.getElementById('wiz-budget-new').value;
-  const spice    = +document.getElementById('wiz-spice-new').value;
-  S.wizMode = 'new-pref';
-  S.wizParams = { cuisines, budget, spice, submode: 'new' };
-  closeWizard();
-  fetchPersonalWithParams(S.wizParams);
 }
 
 // ═══════════════════════════════════════════
@@ -1122,134 +1126,214 @@ function openMapView(mode) {
 }
 
 // ═══════════════════════════════════════════
-// RESTAURANT CARD
+// RESTAURANT CARD — sorted by feedback score
 // ═══════════════════════════════════════════
-function rcard(r, pct, from) {
-  const id = r._id || r.id;
+// rcard uses r.aiScore ONLY — never recalculates the score
+function rcard(r, from) {
+  const id  = r._id || r.id;
+  // aiScore is computed by backend in recommend.js — reuse it, never recalculate
+  const pct = r.aiScore !== undefined ? r.aiScore : (r.matchScore !== undefined ? r.matchScore : '—');
   const tags = (r.tags || []).map(t =>
     `<span class="tag t-${t==='veg'?'veg':t==='nonveg'?'nonveg':'budget'}">${t}</span>`
   ).join('') + (r.cuisines || []).map(c => `<span class="tag t-cuisine">${c}</span>`).join('');
-  const communityBadge = r.communityScore
-    ? `<span class="feedback-badge">★ ${r.communityScore} user avg</span>`
-    : r.avgFeedbackRating
-    ? `<span class="feedback-badge">★ ${r.avgFeedbackRating} user</span>`
-    : '';
-  const aiReason = r.aiReason ? `<div style="font-size:10px;color:var(--gold);margin-top:4px;font-style:italic">🤖 ${r.aiReason}</div>` : '';
   return `<div class="rcard" onclick="openRest('${id}','${from}')">
     <div class="rcard-img">${r.emoji || '🍽️'}</div>
     <div class="rcard-body">
       <div class="rcard-top"><div class="rcard-name">${r.name}</div><div><div class="mp">${pct}%</div><div class="ml">AI match</div></div></div>
       <div class="rcard-meta">${r.address || ''}</div>
-      <div class="rcard-tags">${tags}${communityBadge ? ' ' + communityBadge : ''}</div>
-      ${aiReason}
-      <div class="mbar"><div class="mbar-fill" style="width:${pct}%"></div></div>
-      <div class="rcard-foot"><span>★ ${r.rating}</span><span style="font-size:11px;color:var(--text3)">${'🌶'.repeat(r.spiceLevel)}</span><span style="color:var(--gold);font-size:12px;font-weight:700">${'₹'.repeat(r.priceLevel)}</span></div>
+      <div class="rcard-tags">${tags}</div>
+      <div class="mbar"><div class="mbar-fill" style="width:${typeof pct === 'number' ? pct : 0}%"></div></div>
+      <div class="rcard-foot"><span>★ ${r.rating}</span><span style="font-size:11px;color:var(--text3)">${'🌶'.repeat(r.spiceLevel||0)}</span><span style="color:var(--gold);font-size:12px;font-weight:700">${'₹'.repeat(r.priceLevel||1)}</span></div>
     </div></div>`;
 }
 
 // ═══════════════════════════════════════════
-// PERSONAL PAGE — Wizard-driven
+// PERSONAL PAGE — Step-by-step workflow
 // ═══════════════════════════════════════════
-function initPersonalPage() {
-  if (!S.user) return;
-  document.getElementById('personal-sub').textContent = `Hi ${S.user.name.split(' ')[0]}! What are you in the mood for?`;
-  // Always open wizard when landing on personal page
-  openWizard();
+
+// Show/hide step panels
+function showStep(id) {
+  ['step-mode','step-regular','step-new','step-preferences','personal-results']
+    .forEach(s => document.getElementById(s).style.display = 'none');
+  document.getElementById(id).style.display = '';
+}
+function backToMode()   { S.personalMode = null; S.personalRests = []; showStep('step-mode'); }
+function backToNew()    { showStep('step-new'); }
+
+// User chose Regular or New
+function chooseMode(mode) {
+  if (mode === 'regular') {
+    // Pre-fill sliders with saved preferences
+    document.getElementById('budget-sl').value = S.budget;
+    document.getElementById('bv').textContent = ['₹','₹₹','₹₹₹'][S.budget - 1];
+    document.getElementById('spice-sl').value = S.spice;
+    document.getElementById('sv').textContent = S.spice;
+    showStep('step-regular');
+  } else {
+    showStep('step-new');
+  }
 }
 
-async function fetchPersonalWithParams(params) {
+// User chose Surprise Me or Set Preferences under "New"
+function chooseNewSub(sub) {
+  if (sub === 'surprise') {
+    fetchPersonal('surprise');
+  } else {
+    // Pre-fill new preference sliders
+    S.newBudget = S.user.budgetPreference || 2;
+    S.newSpice  = S.user.spicePreference  || 3;
+    document.getElementById('new-budget-sl').value = S.newBudget;
+    document.getElementById('nbv').textContent = ['₹','₹₹','₹₹₹'][S.newBudget - 1];
+    document.getElementById('new-spice-sl').value = S.newSpice;
+    document.getElementById('nsv').textContent = S.newSpice;
+    document.getElementById('new-cuisine-chips').innerHTML = ALL_CUISINES.map(c =>
+      `<button class="chip" onclick="this.classList.toggle('on')">${c}</button>`
+    ).join('');
+    showStep('step-preferences');
+  }
+}
+
+function initPersonalPage() {
+  if (!S.user) return;
+  const name = S.user.name.split(' ')[0];
+
+  // Set greeting based on whether user has feedback history
+  const hasFeedback = (S.user.likedRestaurants || []).length > 0;
+  document.getElementById('step-mode-greeting').textContent =
+    hasFeedback
+      ? `Welcome back, ${name}! What are you in the mood for?`
+      : `Hi ${name}! Let's find you something great.`;
+
+  document.getElementById('personal-sub').textContent =
+    hasFeedback
+      ? 'AI is personalised from your visit history'
+      : 'Set your preferences and AI will find the best match';
+
+  // Prefill regular-mode sliders
+  S.selCuisines = [...(S.user.preferredCuisines || [])];
+  S.budget = S.user.budgetPreference || 2;
+  S.spice  = S.user.spicePreference  || 3;
+  S.newBudget = S.budget;
+  S.newSpice  = S.spice;
+
+  document.getElementById('cuisine-chips').innerHTML = ALL_CUISINES.map(c =>
+    `<button class="chip ${S.selCuisines.includes(c) ? 'on' : ''}" onclick="toggleC('${c}',this)">${c}</button>`
+  ).join('');
+
+  // If we already have results from this session, skip the mode chooser
+  if (S.personalRests && S.personalRests.length > 0 && S.personalMode) {
+    showStep('personal-results');
+    filterPersonal();
+  } else {
+    showStep('step-mode');
+  }
+}
+
+function toggleC(c, el) {
+  const i = S.selCuisines.indexOf(c);
+  if (i >= 0) S.selCuisines.splice(i, 1); else S.selCuisines.push(c);
+  el.classList.toggle('on');
+}
+
+// Main fetch — called from all paths
+async function fetchPersonal(submode) {
+  let cuisines, budget, spice, apiSubmode;
+
+  if (submode === 'surprise') {
+    cuisines   = S.user.preferredCuisines || [];
+    budget     = S.user.budgetPreference  || 2;
+    spice      = S.user.spicePreference   || 3;
+    apiSubmode = 'surprise';
+  } else if (submode === 'new') {
+    cuisines   = Array.from(document.querySelectorAll('#new-cuisine-chips .chip.on')).map(c => c.textContent);
+    budget     = S.newBudget || S.user.budgetPreference || 2;
+    spice      = S.newSpice  || S.user.spicePreference  || 3;
+    apiSubmode = 'select-preferences';
+  } else {
+    cuisines   = Array.from(document.querySelectorAll('#cuisine-chips .chip.on')).map(c => c.textContent);
+    budget     = S.budget;
+    spice      = S.spice;
+    apiSubmode = 'regular';
+  }
+
+  S.submode      = apiSubmode;
+  S.personalMode = apiSubmode; // remember chosen mode so back-button skips chooser
+
+  // Show results panel with loading state
+  showStep('personal-results');
   const grid = document.getElementById('personal-grid');
+  const aiResult = document.getElementById('ai-chat-result');
+  aiResult.style.display = 'none';
   grid.innerHTML = loadingHTML();
 
-  // Update context banner
-  updateAIContextBanner(params);
+  // For surprise mode: try Groq AI first for smarter picks
+  if (apiSubmode === 'surprise') {
+    try {
+      const aiData = await api('POST', '/groq/recommend', {
+        message: 'Surprise me with the best restaurant that fits my taste profile',
+      });
+      if (aiData.restaurants?.length) {
+        S.personalRests = aiData.restaurants;
+        S.currentSession = null;
+        document.getElementById('ai-chat-text').innerHTML =
+          `🎲 AI picked <strong>${aiData.restaurants[0].name}</strong> for you — ${aiData.restaurants[0].aiReason || 'a great match for your taste!'}`;
+        aiResult.style.display = 'block';
+        filterPersonal();
+        return;
+      }
+    } catch (_) { /* fallback to regular endpoint */ }
+  }
 
   try {
-    const body = {
-      cuisines: params.cuisines || S.user?.preferredCuisines || [],
-      budget:   params.budget   || S.user?.budgetPreference  || 2,
-      spice:    params.spice    || S.user?.spicePreference    || 3,
-      submode:  params.submode  || 'regular',
-    };
-
+    const body = { submode: apiSubmode, cuisines, budget, spice };
+    // For new user or select-preferences, pass vegPreference too
+    body.vegPreference = 'any'; // can be extended from user profile later
     const data = await api('POST', '/recommend/personal', body);
     S.currentSession = data.session;
-    S.isColdStart    = data.isColdStart || false;
+    S.isNewUser = data.isNewUser;
 
-    let restaurants = data.restaurants || [];
-
-    // ── SORTING LOGIC ─────────────────────────────────────
-    if (S.isColdStart) {
-      // First-time user: sort by community feedback score (best first), then by rating
-      restaurants.sort((a, b) => {
-        const aScore = a.communityScore || a.rating || 0;
-        const bScore = b.communityScore || b.rating || 0;
-        return bScore - aScore;
-      });
-    } else {
-      // Returning user: AI has already ranked them — but also boost liked restaurants
-      const likedIds = (S.user?.likedRestaurants || []).map(r => String(r._id || r));
-      restaurants.sort((a, b) => {
-        const aLiked = likedIds.includes(String(a._id)) ? 1 : 0;
-        const bLiked = likedIds.includes(String(b._id)) ? 1 : 0;
-        if (bLiked !== aLiked) return bLiked - aLiked;
-        return (b.matchScore || 0) - (a.matchScore || 0);
-      });
-    }
-
-    S.personalRests = restaurants;
+    // Restaurants already sorted server-side with aiScore attached.
+    // DO NOT re-sort or recalculate scores here — use aiScore as-is.
+    S.personalRests = data.restaurants || [];
     filterPersonal();
-
-    // Show AI context banner
-    const banner = document.getElementById('ai-context-banner');
-    if (banner) banner.style.display = 'flex';
-
   } catch (e) {
     grid.innerHTML = emptyHTML('⚠️', 'Could not load recommendations', e.message);
   }
 }
 
-function updateAIContextBanner(params) {
-  const el = document.getElementById('ai-context-text');
-  if (!el) return;
-  if (S.wizMode === 'new-surprise') {
-    el.innerHTML = `<strong>🎲 Surprise mode!</strong> AI picked something fresh for you — places you haven't visited.`;
-  } else if (S.wizMode === 'new-pref') {
-    const cuisines = params.cuisines?.join(', ') || 'any cuisine';
-    el.innerHTML = `<strong>✨ Try New:</strong> Showing unfamiliar places matching ${cuisines} · Budget ${'₹'.repeat(params.budget||2)} · Spice ${params.spice||3}/5`;
-  } else if (S.isColdStart) {
-    el.innerHTML = `<strong>👋 Welcome!</strong> Showing top-rated restaurants. Rate your visits and AI will personalise for you!`;
-  } else {
-    el.innerHTML = `<strong>🤖 AI-trained</strong> based on your feedback history · Budget ${'₹'.repeat(params.budget||2)} · Spice ${params.spice||3}/5`;
-  }
-}
-
 function filterPersonal() {
-  const q = getSearch('personal');
+  const q    = getSearch('personal');
   const grid = document.getElementById('personal-grid');
+
   if (!S.personalRests.length) {
     S.personalFiltered = [];
-    grid.innerHTML = emptyHTML('🍽️', 'No restaurants found', 'Adjust your preferences and try again');
+    grid.innerHTML = emptyHTML('🍽️', 'No restaurants found', 'Try adjusting your preferences');
     return;
   }
-  if (S.wizMode === 'new-surprise' && S.personalRests.length === 1) {
+
+  // Surprise mode: show a single highlighted card
+  if (S.submode === 'surprise' && S.personalRests.length === 1) {
     const r = S.personalRests[0];
     S.personalFiltered = [r];
-    grid.innerHTML = `<div class="surprise-c"><div class="spin-icon">${r.emoji||'🍽️'}</div>
-      <div style="font-family:var(--font-h);font-size:22px;font-weight:700;margin:1rem 0 .4rem;color:var(--text)">${r.name}</div>
-      <div style="color:var(--text3);font-size:13px;margin-bottom:1.3rem">${r.address||''}</div>
-      ${r.aiReason ? `<div style="font-size:13px;color:var(--gold);margin-bottom:1rem;font-style:italic">🤖 "${r.aiReason}"</div>` : ''}
-      <div style="display:flex;gap:9px;justify-content:center">
-        <button class="btn btn-p" onclick="openRest('${r._id||r.id}','personal')">View restaurant →</button>
-        <button class="btn btn-g" onclick="openWizard()">Try again 🎲</button>
-      </div></div>`;
+    grid.innerHTML = `
+      <div class="surprise-c">
+        <div class="spin-icon">${r.emoji||'🍽️'}</div>
+        <div style="font-family:var(--font-h);font-size:22px;font-weight:700;margin:1rem 0 .4rem;color:var(--text)">${r.name}</div>
+        <div style="color:var(--text3);font-size:13px;margin-bottom:.5rem">${r.address||''}</div>
+        <div style="font-size:13px;color:var(--gold);font-weight:600;margin-bottom:1.3rem">AI Match: ${r.aiScore !== undefined ? r.aiScore : (r.matchScore||'—')}%</div>
+        <div style="display:flex;gap:9px;justify-content:center">
+          <button class="btn btn-p" onclick="openRest('${r._id||r.id}','personal')">View restaurant →</button>
+          <button class="btn btn-g" onclick="S.personalRests=[];fetchPersonal('surprise')">Roll again 🎲</button>
+        </div>
+      </div>`;
     return;
   }
+
   const list = S.personalRests.filter(r => matches(r, q));
   S.personalFiltered = list;
   grid.innerHTML = list.length
-    ? `<div class="rgrid">${list.map(r => rcard(r, r.matchScore || Math.round(r.rating * 20), 'personal')).join('')}</div>`
-    : emptyHTML('🍽️', 'No results', 'Clear search or adjust filters');
+    ? `<div class="rgrid">${list.map(r => rcard(r, 'personal')).join('')}</div>`
+    : emptyHTML('🍽️', 'No results', 'Try clearing the search');
 }
 
 // ═══════════════════════════════════════════
@@ -1329,14 +1413,15 @@ function renderNearbyList(rests) {
     const id = r._id; const pct = r.matchScore ?? Math.round(r.rating * 20);
     const dist = r.distanceLabel || (r.distanceKm != null ? (r.distanceKm < 1 ? Math.round(r.distanceKm * 1000) + ' m' : r.distanceKm.toFixed(1) + ' km') : '');
     const tags = (r.tags || []).map(t => `<span class="tag t-${t==='veg'?'veg':t==='nonveg'?'nonveg':'budget'}">${t}</span>`).join('') + (r.cuisines || []).map(c => `<span class="tag t-cuisine">${c}</span>`).join('');
+    const nearbyScore = r.aiScore !== undefined ? r.aiScore : (r.matchScore ?? Math.round(r.rating * 20));
     return `<div class="rcard nearby-rcard" id="nrc-${id}" onclick="onNearbyCardClick('${id}',${r.lat||0},${r.lng||0})">
       <div class="rcard-img">${r.emoji || '🍽️'}</div>
       <div class="rcard-body">
         <div class="rcard-top"><div class="rcard-name">${r.name}</div><div>${dist ? `<div style="font-size:12px;font-weight:700;color:var(--green)">📍 ${dist}</div>` : ''}</div></div>
         <div class="rcard-meta">${r.address || ''}</div>
         <div class="rcard-tags">${tags}</div>
-        <div class="mbar"><div class="mbar-fill" style="width:${pct}%"></div></div>
-        <div class="rcard-foot"><span>★ ${r.rating}</span><span>${'₹'.repeat(r.priceLevel)}</span><span>Match ${pct}%</span></div>
+        <div class="mbar"><div class="mbar-fill" style="width:${nearbyScore}%"></div></div>
+        <div class="rcard-foot"><span>★ ${r.rating}</span><span>${'₹'.repeat(r.priceLevel)}</span><span>Match ${nearbyScore}%</span></div>
       </div></div>`;
   }).join('')}</div>`;
 }
@@ -1397,18 +1482,17 @@ async function doJoinRoom() {
   } catch (e) { err.textContent = e.message; err.style.display = 'block'; }
   btn.disabled = false; btn.textContent = 'Join Room →';
 }
-
 async function renderRoom() {
   const room = S.room; if (!room) return;
+  // Reset voting state for fresh room render
+  if (!S.groupAdminPick) { S.groupVote = {}; }
   const isHost = String(room.host) === String(S.user?._id);
   document.getElementById('room-pg-title').textContent = 'Room ' + room.code;
   document.getElementById('room-pg-sub').textContent = room.members.length + ' member' + (room.members.length !== 1 ? 's' : '') + ' · ' + (isHost ? 'You are the host' : 'You joined as a member');
   document.getElementById('room-status-txt').textContent = room.members.length > 1 ? room.members.length + ' members in room' : 'Waiting for members…';
-
   const allC = [...new Set(room.members.flatMap(m => m.preferredCuisines || []))];
   const avgB = Math.round(room.members.reduce((s, m) => s + (m.budgetPreference || 2), 0) / room.members.length);
   const avgS = Math.round(room.members.reduce((s, m) => s + (m.spicePreference || 3), 0) / room.members.length);
-
   const membersHTML = room.members.map((m, i) => `
     <div class="mrow">
       <div class="m-left">
@@ -1422,12 +1506,17 @@ async function renderRoom() {
     </div>`).join('');
 
   let recsHTML = '';
-  let aiUsedMsg = '';
   if (room.members.length >= 2) {
     try {
       const data = await api('POST', '/group/recommend', { code: room.code });
       S.groupRests = data.restaurants;
-      aiUsedMsg = data.aiUsed ? '🤖 AI has ranked these restaurants to maximise satisfaction for everyone in the group.' : '';
+      S.groupAdminPick = null;
+      S.groupVote = {};
+      // Store MY session id from this group recommend (used when confirming selection)
+      if (data.sessions) {
+        const mySession = data.sessions.find(s => String(s.userId || s.userId) === String(S.user?._id));
+        if (mySession) S.groupSessionId = mySession._id;
+      }
       recsHTML = renderGroupRecsHTML(S.groupRests, '');
     } catch (e) { recsHTML = emptyHTML('⚠️', 'Could not load recommendations', e.message); }
   } else {
@@ -1453,9 +1542,7 @@ async function renderRoom() {
       <div>
         <div class="gbanner">
           <span class="gb-icon">🤖</span>
-          <div><div class="gb-title">AI combined preferences</div>
-          <div class="gb-sub">Cuisines: ${allC.slice(0,4).join(', ')}${allC.length>4?' +more':''} · Budget: ${'₹'.repeat(avgB)} · Spice: ${avgS}/5</div>
-          ${aiUsedMsg ? `<div style="font-size:10px;color:var(--gold);margin-top:3px">${aiUsedMsg}</div>` : ''}</div>
+          <div><div class="gb-title">AI combined preferences</div><div class="gb-sub">Cuisines: ${allC.slice(0,4).join(', ')}${allC.length>4?' +more':''} · Budget: ${'₹'.repeat(avgB)} · Spice: ${avgS}/5</div></div>
           <div class="gb-av-row">${room.members.map((m,i)=>`<div class="gb-av" style="background:${COLORS[i%COLORS.length]}22;color:${COLORS[i%COLORS.length]}">${(m.name||'?').slice(0,2).toUpperCase()}</div>`).join('')}</div>
         </div>
         <div class="results-head">
@@ -1476,7 +1563,85 @@ function renderGroupRecsHTML(list, q) {
   const filtered = list.filter(r => matches(r, q));
   S.groupFiltered = filtered;
   if (!filtered.length) return emptyHTML('🍽️', 'No results', 'Try a different search');
-  return `<div class="rgrid">${filtered.map(r => rcard(r, r.matchScore || Math.round(r.rating*20), 'room')).join('')}</div>`;
+  const isHost = S.room && String(S.room.host) === String(S.user?._id);
+  return `<div class="rgrid">${filtered.map(r => groupRcard(r, isHost)).join('')}</div>`;
+}
+
+// Group restaurant card — host sees "I prefer this" button; members see vote buttons after pick
+function groupRcard(r, isHost) {
+  const id  = r._id || r.id;
+  const pct = r.aiScore !== undefined ? r.aiScore : (r.matchScore !== undefined ? r.matchScore : '—');
+  const tags = (r.tags || []).map(t =>
+    `<span class="tag t-${t==='veg'?'veg':t==='nonveg'?'nonveg':'budget'}">${t}</span>`
+  ).join('') + (r.cuisines || []).map(c => `<span class="tag t-cuisine">${c}</span>`).join('');
+  const isPicked = S.groupAdminPick === String(id);
+  const vote = S.groupVote[String(id)] || { yes: 0, no: 0 };
+  const totalVotes = vote.yes + vote.no;
+  const yesPct = totalVotes > 0 ? Math.round(vote.yes / totalVotes * 100) : 0;
+  const myVote = (vote.voters || []).find(v => String(v.userId) === String(S.user?._id));
+
+  let actionBtn = '';
+  if (isHost && !S.groupAdminPick) {
+    actionBtn = `<button class="btn btn-p btn-s" style="width:100%;margin-top:8px;justify-content:center" onclick="adminPickRestaurant('${id}')">⭐ I prefer this</button>`;
+  } else if (isPicked) {
+    actionBtn = `<div style="background:var(--gold-light);border:1px solid var(--gold3);border-radius:var(--r);padding:8px;margin-top:8px;text-align:center">
+      <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:4px">Admin's Choice</div>
+      ${isHost
+        ? `<div style="font-size:12px;color:var(--text2);margin-bottom:6px">Votes: ${yesPct}% agree (${totalVotes} votes)</div>
+           <div style="background:var(--bg4);border-radius:4px;height:6px;overflow:hidden;margin-bottom:8px"><div style="background:var(--green);height:100%;width:${yesPct}%"></div></div>
+           ${vote.yes + vote.no === S.room.members.length - 1
+             ? `<button class="btn btn-p btn-s" style="width:100%;justify-content:center" onclick="confirmGroupSelection('${id}')">✅ I'll go here →</button>`
+             : `<div style="font-size:11px;color:var(--text3)">Waiting for ${S.room.members.length - 1 - totalVotes} more votes…</div>`}`
+        : myVote
+          ? `<div style="font-size:12px;color:${myVote.vote === 'yes' ? 'var(--green)' : 'var(--red)'}">You voted: ${myVote.vote === 'yes' ? '👍 Yes' : '👎 No'}</div>`
+          : `<div style="display:flex;gap:8px;justify-content:center">
+               <button class="btn btn-ok btn-s" onclick="castGroupVote('${id}','yes')">👍 Yes, let's go!</button>
+               <button class="btn btn-danger btn-s" onclick="castGroupVote('${id}','no')">👎 Not for me</button>
+             </div>`
+      }
+    </div>`;
+  }
+
+  return `<div class="rcard" onclick="openRest('${id}','room')" id="grcard-${id}">
+    <div class="rcard-img">${r.emoji || '🍽️'}</div>
+    <div class="rcard-body">
+      <div class="rcard-top"><div class="rcard-name">${r.name}</div><div><div class="mp">${pct}%</div><div class="ml">AI match</div></div></div>
+      <div class="rcard-meta">${r.address || ''}</div>
+      <div class="rcard-tags">${tags}</div>
+      <div class="mbar"><div class="mbar-fill" style="width:${typeof pct === 'number' ? pct : 0}%"></div></div>
+      <div class="rcard-foot"><span>★ ${r.rating}</span><span>${'₹'.repeat(r.priceLevel||1)}</span><span>Grp match ${pct}%</span></div>
+      ${actionBtn}
+    </div></div>`;
+}
+
+function adminPickRestaurant(id) {
+  S.groupAdminPick = String(id);
+  S.groupVote[String(id)] = { yes: 0, no: 0, voters: [] };
+  renderGroupRecs();
+  toast('You picked a restaurant! Members will now vote.', 'ok');
+}
+
+function castGroupVote(id, vote) {
+  if (!S.groupVote[String(id)]) S.groupVote[String(id)] = { yes: 0, no: 0, voters: [] };
+  const v = S.groupVote[String(id)];
+  const already = v.voters.find(x => String(x.userId) === String(S.user?._id));
+  if (already) { toast('You already voted', 'err'); return; }
+  v.voters.push({ userId: S.user._id, vote });
+  v[vote]++;
+  renderGroupRecs();
+  toast(vote === 'yes' ? '👍 Vote cast!' : '👎 Vote cast!', 'ok');
+}
+
+async function confirmGroupSelection(id) {
+  const sessionId = S.groupSessionId || S.currentSession?._id;
+  if (sessionId) {
+    try { await api('POST', '/recommend/select', { sessionId, restaurantId: id }); } catch (_) {}
+  }
+  const r = (S.groupRests || []).find(x => String(x._id||x.id) === String(id));
+  const name = r?.name || 'the restaurant';
+  toast('✅ Group is going to ' + name + '! Everyone will get a feedback prompt after the visit.', 'ok');
+  checkPending();
+  setTimeout(() => goPage('home'), 1400);
 }
 function renderGroupRecs() {
   const q = getSearch('group-search');
@@ -1507,8 +1672,16 @@ async function openRest(id, from) {
   const backLabel = from === 'room' ? 'Group Room' : from === 'nearby' ? 'Nearby' : 'Recommendations';
   const backPage = from === 'room' ? 'room' : from === 'nearby' ? 'nearby' : 'personal';
   document.getElementById('rest-bc').textContent = '← ' + backLabel;
-  document.getElementById('rest-bc').onclick = () => goPage(backPage);
-  document.getElementById('rd-back-btn').onclick = () => goPage(backPage);
+  // When going back to personal, show results directly (not the mode chooser)
+  const goBack = () => {
+    if (backPage === 'personal') {
+      goPage('personal'); // initPersonalPage will show results because S.personalRests is set
+    } else {
+      goPage(backPage);
+    }
+  };
+  document.getElementById('rest-bc').onclick = goBack;
+  document.getElementById('rd-back-btn').onclick = goBack;
   document.getElementById('rd-go-btn').onclick = () => selectRest(id);
   let r = [...S.allRests, ...S.personalRests, ...(S.groupRests || [])].find(x => String(x._id || x.id) === String(id));
   if (!r) {
@@ -1516,7 +1689,16 @@ async function openRest(id, from) {
     catch (e) { toast('Could not load restaurant', 'err'); return; }
   }
   S.currentRestId = id;
-  const pct = r.matchScore || Math.round(r.rating * 20);
+  // Use aiScore from the already-computed recommendation response.
+  // This is the same score shown on the card — consistent by design.
+  // aiScore must come from the recommendation list (already computed server-side).
+  // If the restaurant was fetched fresh from /restaurants/:id (not from recs list),
+  // it won't have aiScore — show the value from cache if available, else '—'.
+  const cachedR = [...S.personalRests, ...(S.groupRests||[])].find(x => String(x._id||x.id) === String(id));
+  const pct = cachedR?.aiScore !== undefined ? cachedR.aiScore
+            : r.aiScore !== undefined ? r.aiScore
+            : r.matchScore !== undefined ? r.matchScore
+            : '—';
   document.getElementById('rd-name').textContent = r.name;
   document.getElementById('rd-addr').textContent = '📍 ' + (r.address || '');
   document.getElementById('rd-match').textContent = pct + '%';
@@ -1529,9 +1711,6 @@ async function openRest(id, from) {
   document.getElementById('rd-tags').innerHTML = (r.tags || []).map(t =>
     `<span class="tag t-${t==='veg'?'veg':t==='nonveg'?'nonveg':'budget'}" style="margin-right:4px">${t}</span>`
   ).join('');
-  if (r.aiReason) {
-    document.getElementById('rd-tags').innerHTML += `<div style="margin-top:8px;font-size:12px;color:var(--gold);font-style:italic">🤖 ${r.aiReason}</div>`;
-  }
   document.getElementById('rd-menu').innerHTML = (r.menu || []).map(sec => `
     <div class="menu-sec">
       <div class="menu-sec-t">${sec.category}</div>
@@ -1540,7 +1719,6 @@ async function openRest(id, from) {
   document.getElementById('rd-stats').innerHTML = [
     ['Cuisine', (r.cuisines || []).join(', ')], ['Price', '₹'.repeat(r.priceLevel)],
     ['Spice', r.spiceLevel + '/5'], ['Rating', r.rating + ' ⭐'],
-    ['Community', r.communityScore ? r.communityScore + ' ⭐ avg' : 'No ratings yet'],
     ['Type', r.tags?.includes('veg') && r.tags?.includes('nonveg') ? 'Veg & Non-veg' : r.tags?.includes('veg') ? 'Vegetarian' : 'Non-vegetarian']
   ].map(([l, v]) => `<div class="stat-row"><span class="stat-l">${l}</span><span style="font-weight:600">${v}</span></div>`).join('');
   const sim = S.allRests.filter(x => String(x._id || x.id) !== String(id) && (x.cuisines || []).some(c => (r.cuisines || []).includes(c))).slice(0, 2);
@@ -1561,7 +1739,7 @@ async function selectRest(id) {
 }
 
 // ═══════════════════════════════════════════
-// FEEDBACK
+// FEEDBACK — dropdown food item selection
 // ═══════════════════════════════════════════
 async function checkPending() {
   if (!S.user) return;
@@ -1572,6 +1750,7 @@ async function checkPending() {
     if (dot) dot.style.display = d.sessions.length ? 'inline' : 'none';
   } catch (_) {}
 }
+
 async function fetchFeedback() {
   const list = document.getElementById('feedback-list');
   list.innerHTML = loadingHTML();
@@ -1585,9 +1764,11 @@ async function fetchFeedback() {
       const restData = [...S.allRests, ...S.personalRests].find(x => String(x._id) === String(r?._id));
       const allItems = restData ? (restData.menu || []).flatMap(sec => sec.items.map(i => ({ ...i, category: sec.category }))) : [];
       const itemOptionsHTML = allItems.map(item => `<option value="${encodeURIComponent(item.name)}|${encodeURIComponent(item.category)}|${item.price}">${item.name} — ${item.category} (₹${item.price})</option>`).join('');
+
       return `<div class="fb-card" id="fbc-${sess._id}">
         <div style="font-size:18px;font-weight:700;font-family:var(--font-h);margin-bottom:3px;color:var(--text)">${r?.emoji||'🍽️'} ${r?.name||'Restaurant'}</div>
         <div style="font-size:12px;color:var(--text3);margin-bottom:1.15rem">📍 ${r?.address||''} · Rate your experience</div>
+
         <div class="sec-label">Restaurant rating</div>
         <div class="stars-row" id="stars-${sess._id}">
           ${[1,2,3,4,5].map(n=>`<button class="star-b" onclick="setRating('${sess._id}',${n})">★</button>`).join('')}
@@ -1599,17 +1780,20 @@ async function fetchFeedback() {
         </div>
         <div class="sec-label">Comment (optional)</div>
         <textarea id="cmt-${sess._id}" placeholder="What did you enjoy? What could be better?"></textarea>
+
         ${allItems.length ? `
         <div class="fb-dropdown-wrap">
           <div class="fb-dropdown-title">🍴 Rate specific dishes (optional)</div>
           <div class="fb-select-wrap">
             <select class="fb-select" id="item-select-${sess._id}" onchange="addItemFromDropdown('${sess._id}')">
-              <option value="">— Select a dish to rate —</option>${itemOptionsHTML}
+              <option value="">— Select a dish to rate —</option>
+              ${itemOptionsHTML}
             </select>
             <span class="fb-select-arrow">▼</span>
           </div>
           <div class="selected-items-container" id="selected-items-${sess._id}"></div>
         </div>` : ''}
+
         <div style="display:flex;gap:9px;margin-top:1.1rem">
           <button class="btn btn-p btn-s" onclick="submitFeedback('${sess._id}','${r?._id}')">Submit feedback</button>
           <button class="btn btn-g btn-s" onclick="document.getElementById('fbc-${sess._id}').style.display='none'">Skip</button>
@@ -1618,17 +1802,22 @@ async function fetchFeedback() {
     }).join('');
   } catch (e) { list.innerHTML = emptyHTML('⚠️', 'Could not load feedback', e.message); }
 }
+
 function addItemFromDropdown(sid) {
   const sel = document.getElementById('item-select-' + sid);
   const val = sel.value;
   if (!val) return;
-  const [encName, encCat] = val.split('|');
+  const [encName, encCat, price] = val.split('|');
   const itemName = decodeURIComponent(encName);
   const category = decodeURIComponent(encCat);
   const enc = encodeURIComponent(itemName);
   sel.value = '';
-  if (window._fbState[sid].itemFeedbacks[itemName]) { toast('This dish is already added', 'err'); return; }
+
+  if (window._fbState[sid].itemFeedbacks[itemName]) {
+    toast('This dish is already added', 'err'); return;
+  }
   window._fbState[sid].itemFeedbacks[itemName] = { itemName, category, rating: 0, liked: null };
+
   const container = document.getElementById('selected-items-' + sid);
   const div = document.createElement('div');
   div.className = 'item-fb-row';
@@ -1648,12 +1837,14 @@ function addItemFromDropdown(sid) {
     </div>`;
   container.appendChild(div);
 }
+
 function removeItemFb(sid, itemName) {
   delete window._fbState[sid].itemFeedbacks[itemName];
   const enc = encodeURIComponent(itemName);
   const el = document.getElementById('ifbc-' + sid + '-' + enc);
   if (el) el.remove();
 }
+
 function setRating(sid, n) {
   window._fbState[sid].rating = n;
   document.querySelectorAll(`#stars-${sid} .star-b`).forEach((b, i) => b.classList.toggle('lit', i < n));
@@ -1697,7 +1888,7 @@ async function submitFeedback(sid, rid) {
 }
 
 // ═══════════════════════════════════════════
-// HISTORY
+// HISTORY — with expandable feedback detail
 // ═══════════════════════════════════════════
 async function fetchHistory() {
   const list = document.getElementById('history-list');
@@ -1706,11 +1897,14 @@ async function fetchHistory() {
     const data = await api('GET', '/recommend/history');
     const sessions = data.sessions.filter(s => s.selectedRestaurant);
     if (!sessions.length) { list.innerHTML = emptyHTML('📋', 'No visits yet', 'Use "I\'ll go here" on any restaurant to track visits'); return; }
+
+    // Also fetch user feedbacks for mapping
     let feedbackMap = {};
     try {
       const fd = await api('GET', '/feedback/user');
       (fd.feedbacks || []).forEach(fb => { feedbackMap[String(fb.sessionId)] = fb; });
     } catch (_) {}
+
     list.innerHTML = sessions.map(s => {
       const r = s.selectedRestaurant;
       const date = new Date(s.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -1744,6 +1938,7 @@ async function fetchHistory() {
     }).join('');
   } catch (e) { list.innerHTML = emptyHTML('⚠️', 'Could not load history', e.message); }
 }
+
 function toggleHistoryDetail(sid) {
   const el = document.getElementById('hd-' + sid);
   if (!el) return;
