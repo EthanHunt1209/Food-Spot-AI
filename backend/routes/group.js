@@ -1,9 +1,11 @@
+// routes/group.js — Group room management
+// Uses calculateScore + scoreGroup from recommendEngine (single source of truth)
 const express    = require('express');
 const GroupRoom  = require('../models/GroupRoom');
 const Restaurant = require('../models/Restaurant');
 const Session    = require('../models/Session');
 const { protect } = require('../middleware/auth');
-const { scoreForGroup, aggregatePreferences } = require('../middleware/recommendEngine');
+const { scoreGroup, aggregatePreferences } = require('../middleware/recommendEngine');
 
 const router = express.Router();
 
@@ -11,23 +13,23 @@ function genCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
-// ── POST /api/group/create ────────────────────────────────
+// POST /api/group/create
 router.post('/create', protect, async (req, res) => {
   try {
     const user = req.user;
     let code;
-    // Ensure unique code
     do { code = genCode(); } while (await GroupRoom.findOne({ code }));
 
     const room = await GroupRoom.create({
       code,
       host: user._id,
       members: [{
-        userId: user._id,
-        name:   user.name,
+        userId:            user._id,
+        name:              user.name,
         preferredCuisines: user.preferredCuisines,
         budgetPreference:  user.budgetPreference,
         spicePreference:   user.spicePreference,
+        vegPreference:     user.vegPreference || 'any',
       }],
     });
 
@@ -37,7 +39,7 @@ router.post('/create', protect, async (req, res) => {
   }
 });
 
-// ── POST /api/group/join ──────────────────────────────────
+// POST /api/group/join
 router.post('/join', protect, async (req, res) => {
   try {
     const { code } = req.body;
@@ -46,15 +48,15 @@ router.post('/join', protect, async (req, res) => {
     const room = await GroupRoom.findOne({ code: code.toUpperCase(), active: true });
     if (!room) return res.status(404).json({ success: false, message: 'Room not found or expired.' });
 
-    // Check if already a member
     const already = room.members.some(m => String(m.userId) === String(req.user._id));
     if (!already) {
       room.members.push({
-        userId: req.user._id,
-        name:   req.user.name,
+        userId:            req.user._id,
+        name:              req.user.name,
         preferredCuisines: req.user.preferredCuisines,
         budgetPreference:  req.user.budgetPreference,
         spicePreference:   req.user.spicePreference,
+        vegPreference:     req.user.vegPreference || 'any',
       });
       await room.save();
     }
@@ -65,7 +67,7 @@ router.post('/join', protect, async (req, res) => {
   }
 });
 
-// ── GET /api/group/:code ──────────────────────────────────
+// GET /api/group/:code
 router.get('/:code', protect, async (req, res) => {
   try {
     const room = await GroupRoom.findOne({ code: req.params.code.toUpperCase(), active: true });
@@ -76,7 +78,7 @@ router.get('/:code', protect, async (req, res) => {
   }
 });
 
-// ── POST /api/group/:code/kick ────────────────────────────
+// POST /api/group/:code/kick
 router.post('/:code/kick', protect, async (req, res) => {
   try {
     const room = await GroupRoom.findOne({ code: req.params.code.toUpperCase() });
@@ -92,7 +94,7 @@ router.post('/:code/kick', protect, async (req, res) => {
   }
 });
 
-// ── POST /api/group/recommend ─────────────────────────────
+// POST /api/group/recommend
 router.post('/recommend', protect, async (req, res) => {
   try {
     const { code } = req.body;
@@ -103,29 +105,37 @@ router.post('/recommend', protect, async (req, res) => {
       preferredCuisines: m.preferredCuisines,
       budgetPreference:  m.budgetPreference,
       spicePreference:   m.spicePreference,
+      vegPreference:     m.vegPreference || 'any',
     }));
 
     const restaurants = await Restaurant.find();
-    const scored = restaurants
-      .map(r => {
-        const { avg, scores } = scoreForGroup(r, members);
-        return { ...r.toObject(), matchScore: avg, memberScores: scores };
-      })
-      .sort((a, b) => b.matchScore - a.matchScore);
 
-    // Save session for each member
+    // Score each restaurant using the group formula (single source of truth)
+    // Score = avgPref*0.5 + leastSatisfied*0.2 + rating*0.2 + distance*0.1
+    const scored = restaurants
+      .map(r => ({
+        ...r.toObject(),
+        aiScore:      scoreGroup(r, members, null),
+        memberScores: members.map(m => scoreGroup(r, [m], null)),
+      }))
+      .sort((a, b) => b.aiScore - a.aiScore);
+
+    // Save a session for each member
     const aggPref = aggregatePreferences(members);
-    const sessionPromises = room.members.map(m =>
+    await Promise.all(room.members.map(m =>
       Session.create({
-        userId: m.userId,
-        mode: 'group',
+        userId:        m.userId,
+        mode:          'group',
         groupRoomCode: room.code,
-        groupMembers: room.members.map(x => x.userId),
-        filters: { cuisines: aggPref.preferredCuisines, budget: aggPref.budgetPreference, spice: aggPref.spicePreference },
+        groupMembers:  room.members.map(x => x.userId),
+        filters: {
+          cuisines: aggPref.preferredCuisines,
+          budget:   aggPref.budgetPreference,
+          spice:    aggPref.spicePreference,
+        },
         recommendedRestaurants: scored.map(r => r._id),
       })
-    );
-    await Promise.all(sessionPromises);
+    ));
 
     res.json({ success: true, restaurants: scored, room });
   } catch (err) {
@@ -133,7 +143,7 @@ router.post('/recommend', protect, async (req, res) => {
   }
 });
 
-// ── DELETE /api/group/:code/close ─────────────────────────
+// DELETE /api/group/:code/close
 router.delete('/:code/close', protect, async (req, res) => {
   try {
     const room = await GroupRoom.findOne({ code: req.params.code.toUpperCase() });
