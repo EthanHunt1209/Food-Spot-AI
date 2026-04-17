@@ -1,11 +1,11 @@
-// routes/group.js — Group room management
-// Uses calculateScore + scoreGroup from recommendEngine (single source of truth)
+// routes/group.js — FIXED
+// Key fix: use scoreForGroup (correct export) instead of scoreGroup
 const express    = require('express');
 const GroupRoom  = require('../models/GroupRoom');
 const Restaurant = require('../models/Restaurant');
 const Session    = require('../models/Session');
 const { protect } = require('../middleware/auth');
-const { scoreGroup, aggregatePreferences } = require('../middleware/recommendEngine');
+const { scoreForGroup, aggregatePreferences } = require('../middleware/recommendEngine');
 
 const router = express.Router();
 
@@ -95,6 +95,7 @@ router.post('/:code/kick', protect, async (req, res) => {
 });
 
 // POST /api/group/recommend
+// FIXED: uses scoreForGroup (correct export from recommendEngine)
 router.post('/recommend', protect, async (req, res) => {
   try {
     const { code } = req.body;
@@ -110,18 +111,20 @@ router.post('/recommend', protect, async (req, res) => {
 
     const restaurants = await Restaurant.find();
 
-    // Score each restaurant using the group formula (single source of truth)
-    // Score = avgPref*0.5 + leastSatisfied*0.2 + rating*0.2 + distance*0.1
+    // scoreForGroup returns { avg, scores[] }
     const scored = restaurants
-      .map(r => ({
-        ...r.toObject(),
-        aiScore:      scoreGroup(r, members, null),
-        memberScores: members.map(m => scoreGroup(r, [m], null)),
-      }))
-      .sort((a, b) => b.aiScore - a.aiScore);
+      .map(r => {
+        const { avg, scores } = scoreForGroup(r, members, null);
+        return {
+          ...r.toObject(),
+          matchScore:   avg,
+          memberScores: scores,
+        };
+      })
+      .sort((a, b) => b.matchScore - a.matchScore);
 
-    // Save a session for each member
     const aggPref = aggregatePreferences(members);
+
     const savedSessions = await Promise.all(room.members.map(m =>
       Session.create({
         userId:        m.userId,
